@@ -4,8 +4,7 @@ from datetime import timedelta
 from itertools import chain
 import functools
 
-import date_regexes
-from date_regexes import DateRegex
+from .date_regexes import DateRegex
 
 
 #
