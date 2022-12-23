@@ -195,9 +195,9 @@ class DateParser:
                 )
             )
 
-        current_date = datetime.date.today()
+        
 
-        current_year = current_date.year
+        current_year = self.date.year
 
         date_fields = date_match.groups(default=str(current_year))
 
@@ -227,7 +227,7 @@ class DateParser:
     # can also handle phrases like "this tuesday", "next tuesday"
 
     def get_weekday_date(
-        self, input_str: str, today: datetime.date = datetime.date.today()
+        self, input_str: str
     ) -> datetime.date:
         input_str = input_str.lower()
         weekday_match = re.search(self.regexes.relative_weekday_pattern, input_str)
@@ -241,7 +241,7 @@ class DateParser:
         modifier, weekday = weekday_match.groups(default="this")
 
         weekday_index = self.regexes.weekdays_short.index(weekday)
-        today_weekday = today.isoweekday()
+        today_weekday = self.date.isoweekday()
         weekday_diff = weekday_index - today_weekday
 
         if weekday_diff < 0:
@@ -250,10 +250,10 @@ class DateParser:
         if modifier == "next":
             weekday_diff = weekday_diff + 7
 
-        return today + timedelta(days=weekday_diff)
+        return self.date + timedelta(days=weekday_diff)
 
     def get_countdown_type_date(
-        self, input_str: str, today: datetime.date = datetime.date.today()
+        self, input_str: str
     ) -> datetime.date:
 
         countdown_match = re.search(self.regexes.in_n_intervals_pattern, input_str)
@@ -273,7 +273,7 @@ class DateParser:
 
         delta = timedelta(days=(days * count_num))
 
-        return today + delta
+        return self.date + delta
 
     # general purpose function for parsing a date
     # checks if the string is a match in any of the patterns in absolute_date_patterns[]
@@ -291,9 +291,9 @@ class DateParser:
         # TODO this could prolly be refactored better
 
         if input_str == "today":
-            return datetime.date.today()
+            return self.date
         elif input_str == "tomorrow":
-            return datetime.date.today() + timedelta(days=1)
+            return self.date + timedelta(days=1)
 
         selected_pattern = None
 
@@ -333,6 +333,8 @@ class DateParser:
     def parse_complex_date(
         self, input_str: str, allow_past_dates=True
     ) -> datetime.date:
+
+        input_str = input_str.lower()
 
         # the "anchor date" is the absolute date to which modifiers like "before/after" are applied
         # such a date is always representable by a datetime.date object
