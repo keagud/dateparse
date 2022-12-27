@@ -39,7 +39,7 @@ class DateParser:
                 for p in (
                     self.regexes.weekday_match_regex,
                     self.regexes.months_match_regex,
-                    self.regexes.named_days_regex,  
+                    self.regexes.named_days_regex,
                 )
             ]
         )
@@ -55,7 +55,7 @@ class DateParser:
 
         for match in anchor_iter:
             if match and match.end() > rightpos:
-                pass
+                rightmost = match
 
     def get_months_interval(
         self, months_count: int, start_date: datetime.date | None = None  # type:ignore
@@ -79,6 +79,7 @@ class DateParser:
         try:
             clean_str = self.clean_whitespace(input_str)
             return int(clean_str)
+        # TODO more specificity in exceptions
         except Exception as e:
 
             raise Exception("Unable to read as a number: {}".format(input_str))
@@ -195,8 +196,6 @@ class DateParser:
                 )
             )
 
-        
-
         current_year = self.date.year
 
         date_fields = date_match.groups(default=str(current_year))
@@ -214,7 +213,7 @@ class DateParser:
         # see if the date as currently calculated is in the past
         # and if that's not allowed, correct it
         date_in_past = (
-            current_date.toordinal()
+            self.date.toordinal()
             > datetime.date(year_match, month_match, day_match).toordinal()
         )
 
@@ -226,9 +225,7 @@ class DateParser:
     # takes a weekday as a string, returns the date of its next occurrence relative to today
     # can also handle phrases like "this tuesday", "next tuesday"
 
-    def get_weekday_date(
-        self, input_str: str
-    ) -> datetime.date:
+    def get_weekday_date(self, input_str: str) -> datetime.date:
         input_str = input_str.lower()
         weekday_match = re.search(self.regexes.relative_weekday_pattern, input_str)
         if not weekday_match:
@@ -252,9 +249,7 @@ class DateParser:
 
         return self.date + timedelta(days=weekday_diff)
 
-    def get_countdown_type_date(
-        self, input_str: str
-    ) -> datetime.date:
+    def get_countdown_type_date(self, input_str: str) -> datetime.date:
 
         countdown_match = re.search(self.regexes.in_n_intervals_pattern, input_str)
 

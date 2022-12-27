@@ -81,7 +81,6 @@ class DateRegex:
         if named_days is not None:
             self.named_days.update(named_days)
 
-
         self.named_days_regex = self.__list_to_regex(list(self.named_days.keys()))
 
         # compile patterns
