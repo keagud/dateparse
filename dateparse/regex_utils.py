@@ -1,4 +1,8 @@
 import re
+from collections import namedtuple
+from typing import Any
+from itertools import chain
+
 
 Date_Formats = {"ISO": "%Y-%m-%d"}
 
@@ -29,12 +33,6 @@ WEEKDAY_SHORTNAMES = [
     "sun",
 ]  # one-indexed for symmetry with MONTH_SHORTNAMES[] mostly
 
-named_days = {
-    "christmas": "dec 25",
-    "new years": "jan 1",
-    "halloween": "oct 31",
-}  # TODO allow user to add to this
-# also TODO let this be used in the parser- currently it does not
 
 TIME_INTERVAL_TYPES = ["day", "week", "month", "year"]
 
@@ -67,6 +65,7 @@ MONTHS_MATCH_REGEX = list_to_regex(MONTH_SHORTNAMES)
 WEEKDAY_MATCH_REGEX = list_to_regex(WEEKDAY_SHORTNAMES)
 TIME_INTERVAL_REGEX = list_to_regex(TIME_INTERVAL_TYPES)
 NUMBER_WORDS_REGEX = list_to_regex(NUMBER_WORDS)
+
 INTERVAL_PREPOSITION_REGEX = (
     list_to_regex(POSITIVE_INTERVAL_WORDS)
     + "|"
@@ -78,7 +77,7 @@ INTERVAL_PREPOSITION_REGEX = (
 # compile patterns
 
 # of the form "oct 20" "october 20" "10-20-2023
-DATE_PATTERN = re.compile(
+MDY_DATE_PATTERN = re.compile(
     r"(" + MONTHS_MATCH_REGEX + r"|\d+)[^\d\n]+?(\d{1,2})([^\d\n]+\d{4})?"
 )
 
@@ -104,13 +103,42 @@ RELATIVE_WEEKDAY_PATTERN = re.compile(
 )
 
 
-# collects the patterns refering to absolute dates
-# e.g. dates that are associated unambiguously with a datetime.date expression
-# these expressions are used by the parser to "anchor" any other time expressions to a date
+def _wrap_patterns(typename: str, contents: dict[str, Any]):
+    tuple_type = namedtuple(typename, contents, defaults=contents.values())
+    return tuple_type()
 
 
-ABSOLUTE_DATE_PATTERNS = (
-    DATE_PATTERN,
-    IN_N_INTERVALS_PATTERN,
-    RELATIVE_WEEKDAY_PATTERN,
-)
+_patterns_dict = {
+    "month_day": MDY_DATE_PATTERN,
+    "in_n_intervals": IN_N_INTERVALS_PATTERN,
+    "relative_weekday": RELATIVE_WEEKDAY_PATTERN,
+    "relative_interval": RELATIVE_INTERVAL_PATTERN,
+}
+
+
+date_patterns = _wrap_patterns("_patterns", _patterns_dict)
+
+# UTILITY FUNCTIONS FOR REGEX
+
+
+def iter_all_matches(
+    text: str, patterns: list[re.Pattern[str]] | list[str], reverse: bool = False
+):
+
+    """
+    Yield all matches for any of the given patterns in the text, iterating left to right,
+    or right to left if reversed is specified.
+    """
+
+    comp_patterns: list[re.Pattern] = [
+        re.compile(p) if not isinstance(p, re.Pattern) else p for p in patterns
+    ]
+
+    match_iterators = [re.finditer(pattern, text) for pattern in comp_patterns]
+    matches_list = list(chain.from_iterable(match_iterators))
+
+    matches_list.sort(key=lambda x: x.start(), reverse=reverse)
+
+    for match in matches_list:
+        if match:
+            yield match
