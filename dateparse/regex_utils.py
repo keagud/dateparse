@@ -103,11 +103,6 @@ RELATIVE_WEEKDAY_PATTERN = re.compile(
 )
 
 
-def _wrap_patterns(typename: str, contents: dict[str, Any]):
-    tuple_type = namedtuple(typename, contents, defaults=contents.values())
-    return tuple_type()
-
-
 _patterns_dict = {
     "month_day": MDY_DATE_PATTERN,
     "in_n_intervals": IN_N_INTERVALS_PATTERN,
@@ -115,8 +110,10 @@ _patterns_dict = {
     "relative_interval": RELATIVE_INTERVAL_PATTERN,
 }
 
+_WrapPatterns = namedtuple("_WrapPatterns", ",".join(_patterns_dict))
 
-date_patterns = _wrap_patterns("_patterns", _patterns_dict)
+date_patterns = _WrapPatterns(**_patterns_dict)
+
 
 # UTILITY FUNCTIONS FOR REGEX
 
