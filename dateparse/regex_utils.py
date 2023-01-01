@@ -1,7 +1,7 @@
 import re
+from re import Pattern
 from collections import namedtuple
-from typing import Any
-from itertools import chain
+from dataclasses import dataclass
 
 
 Date_Formats = {"ISO": "%Y-%m-%d"}
@@ -56,7 +56,7 @@ NUMBER_WORDS = [
 # utility function to convert a list of strings to a
 # regex pattern string matching any element in the list
 # returned as a string rather than re.Pattern to allow further recombination
-def list_to_regex(input_list: list) -> str:
+def list_to_regex(input_list: list[str]) -> str:
     return "|".join([s for s in input_list if s])
 
 
@@ -103,39 +103,29 @@ RELATIVE_WEEKDAY_PATTERN = re.compile(
 )
 
 
-_patterns_dict = {
-    "month_day": MDY_DATE_PATTERN,
-    "in_n_intervals": IN_N_INTERVALS_PATTERN,
-    "relative_weekday": RELATIVE_WEEKDAY_PATTERN,
-    "relative_interval": RELATIVE_INTERVAL_PATTERN,
-}
-
-_WrapPatterns = namedtuple("_WrapPatterns", ",".join(_patterns_dict))
-
-date_patterns = _WrapPatterns(**_patterns_dict)
 
 
-# UTILITY FUNCTIONS FOR REGEX
+DateFormat = namedtuple("DateFormat", ['pattern', 'parse_func']) 
 
 
-def iter_all_matches(
-    text: str, patterns: list[re.Pattern[str]] | list[str], reverse: bool = False
-):
+@dataclass(frozen=True, kw_only=True)
+class DatePatterns:
 
-    """
-    Yield all matches for any of the given patterns in the text, iterating left to right,
-    or right to left if reversed is specified.
-    """
+    month_day: Pattern = MDY_DATE_PATTERN
+    in_n_intervals: Pattern = IN_N_INTERVALS_PATTERN
+    relative_weekday: Pattern = RELATIVE_WEEKDAY_PATTERN
+    relative_interval: Pattern = RELATIVE_INTERVAL_PATTERN
+    named_days: Pattern
 
-    comp_patterns: list[re.Pattern] = [
-        re.compile(p) if not isinstance(p, re.Pattern) else p for p in patterns
-    ]
+    def get_absolute_patterns(self) -> list[Pattern]:
+        return [self.month_day, self.in_n_intervals, self.relative_weekday]
 
-    match_iterators = [re.finditer(pattern, text) for pattern in comp_patterns]
-    matches_list = list(chain.from_iterable(match_iterators))
+    def __iter__(self):
+        for p in self.get_absolute_patterns():
+            yield p
 
-    matches_list.sort(key=lambda x: x.start(), reverse=reverse)
+        yield self.relative_interval
+        yield self.named_days
 
-    for match in matches_list:
-        if match:
-            yield match
+
+
