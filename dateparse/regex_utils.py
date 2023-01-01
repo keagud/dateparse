@@ -3,6 +3,8 @@ from re import Pattern
 from collections import namedtuple
 from dataclasses import dataclass
 
+from datetime import date
+
 
 Date_Formats = {"ISO": "%Y-%m-%d"}
 
@@ -103,11 +105,6 @@ RELATIVE_WEEKDAY_PATTERN = re.compile(
 )
 
 
-
-
-DateFormat = namedtuple("DateFormat", ['pattern', 'parse_func']) 
-
-
 @dataclass(frozen=True, kw_only=True)
 class DatePatterns:
 
@@ -128,4 +125,22 @@ class DatePatterns:
         yield self.named_days
 
 
+@dataclass(frozen=True)
+class DatePattern:
+    pattern: re.Pattern
+    is_absolute: bool
 
+    pass
+
+
+@dataclass(frozen=True, kw_only=True)
+class DateMatch:
+    content: str
+    start_index: int
+    end_index: int
+    is_absolute: bool
+
+
+class DateIter:
+    def __init__(self, input_text: str, named_days: dict = {}) -> None:
+        pass
