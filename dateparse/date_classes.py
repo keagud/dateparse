@@ -1,17 +1,20 @@
-import re
-from re import Match
 from re import Pattern
+from re import Match
 from re import finditer
+
+
 from typing import Iterable
+from typing import Callable
 
 from datetime import date
 from dataclasses import dataclass
 
 
+@dataclass(frozen=True, kw_only=True)
 class DateExpression:
-    def __init__(self, pattern: Pattern, is_absolute: bool = False) -> None:
-        self.pattern = pattern
-        self.is_absolute = is_absolute
+    pattern: Pattern
+    is_absolute: bool
+    parse_func: Callable[[None], date]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -20,7 +23,7 @@ class DateMatch:
     start_index: int
     end_index: int
     content: str
-
+    match_obj: Match
 
 
 class DateIter:
@@ -47,6 +50,7 @@ class DateIter:
                     content=match.group(),
                     start_index=match.start(),
                     end_index=match.end(),
+                    match_obj=match,
                 )
                 for match in match_iter
                 if match
@@ -58,6 +62,3 @@ class DateIter:
 
         for match in all_matches:
             yield match
-
-
-            

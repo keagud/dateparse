@@ -80,28 +80,32 @@ INTERVAL_PREPOSITION_REGEX = (
 
 # of the form "oct 20" "october 20" "10-20-2023
 MDY_DATE_PATTERN = re.compile(
-    r"(" + MONTHS_MATCH_REGEX + r"|\d+)[^\d\n]+?(\d{1,2})([^\d\n]+\d{4})?"
+    r"(?P<month>"
+    + MONTHS_MATCH_REGEX
+    + r"|\d+)[^\d\n]+?(?P<day>\d{1,2})(?P<year>[^\d\n]+\d{4})?"
 )
 
 # phrases of the form "a week from"
 RELATIVE_INTERVAL_PATTERN = re.compile(
-    r"(a\s*|"
+    r"(?P<time_unit_count>a\s*|"
     + NUMBER_WORDS_REGEX
-    + r")?\s*("
+    + r")?\s*(?P<time_interval_name>"
     + TIME_INTERVAL_REGEX
-    + r")\w*[^\n\d\w]*("
+    + r")\w*[^\n\d\w]*(?P<preposition>"
     + INTERVAL_PREPOSITION_REGEX
     + ")"
 )
 
 # phrases of the form "in ten days", "in two weeks"
 IN_N_INTERVALS_PATTERN = re.compile(
-    r"in[^\n\d\w](\w+|a)[^\n\d\w](" + TIME_INTERVAL_REGEX + r")\w*?"
+    r"in[^\n\d\w](?P<days_number>\w+|a)[^\n\d\w](?P<time_interval_name>"
+    + TIME_INTERVAL_REGEX
+    + r")\w*?"
 )
 
 # phrases of the form "this sunday", "next wednesday"
 RELATIVE_WEEKDAY_PATTERN = re.compile(
-    r"(this|next)?[^\n\d\w]*(" + WEEKDAY_MATCH_REGEX + ")"
+    r"(?P<specifier>this|next)?[^\n\d\w]*(?P<weekday_name>" + WEEKDAY_MATCH_REGEX + ")"
 )
 
 
@@ -144,7 +148,3 @@ class DateMatch:
 class DateIter:
     def __init__(self, input_text: str, named_days: dict = {}) -> None:
         pass
-
-
-
-
