@@ -1,10 +1,11 @@
 import re
 from re import Match
 from re import Pattern
+from re import finditer
+from typing import Iterable
 
 from datetime import date
 from dataclasses import dataclass
-from itertools import chain
 
 
 class DateExpression:
@@ -21,76 +22,42 @@ class DateMatch:
     content: str
 
 
+
 class DateIter:
-    def __init__(self, input_text: str, expressions: list[DateExpression]) -> None:
-
-        self.input_text = input_text
+    def __init__(
+        self, text: str, expressions: Iterable[DateExpression], reversed: bool = False
+    ) -> None:
+        self.text = text
         self.expressions = expressions
-
-    def _list_all_matches(
-        self,
-        text: str,
-        patterns: list[re.Pattern[str]] | list[str],
-        reverse: bool = False,
-    ) -> list[Match[str]]:
-
-        """
-        Returns a list of all matches for any of the given patterns in the text,
-        iterating left to right, or right to left if reversed is specified.
-        """
-
-        comp_patterns: list[re.Pattern] = [
-            re.compile(p) if not isinstance(p, re.Pattern) else p for p in patterns
-        ]
-
-        match_iterators = [re.finditer(pattern, text) for pattern in comp_patterns]
-        matches_list = list(chain.from_iterable(match_iterators))
-
-        matches_list.sort(key=lambda x: x.start(), reverse=reverse)
-
-        return matches_list
-
-    def _regex_to_datematch(self, expr: DateExpression, m: Match):
-        content: str = m.group()
-
-        if not content:
-            return None
-
-        start_index, end_index = m.span()
-
-        return DateMatch(
-            expression=expr,
-            start_index=start_index,
-            end_index=end_index,
-            content=content,
-        )
+        self.reversed = reversed
 
     def __iter__(self):
 
+        all_matches: list[DateMatch] = []
+
         match_iterators = (
-            ((expr, re.finditer(expr.pattern, self.input_text)))
-            for expr in self.expressions
+            (expr, finditer(expr.pattern, self.text)) for expr in self.expressions
         )
 
-        # yield a DateMatch
+        for match_expr, match_iter in match_iterators:
 
-        all_matches = []
-
-        for match_iter_content in match_iterators:
-
-            matched_expr, expr_iter = match_iter_content
-
-            matches_from_date_expr = [
-                i
-                for i in map(
-                    lambda x: self._regex_to_datematch(matched_expr, x), expr_iter
+            matches = [
+                DateMatch(
+                    expression=match_expr,
+                    content=match.group(),
+                    start_index=match.start(),
+                    end_index=match.end(),
                 )
-                if i is not None
+                for match in match_iter
+                if match
             ]
 
-            all_matches.append(matches_from_date_expr)
+            all_matches.extend(matches)
 
-        all_matches.sort(key=lambda x: x.start_index)
+        all_matches.sort(key=lambda x: x.start_index, reverse=self.reversed)
 
-        for datematch in all_matches:
-            yield datematch
+        for match in all_matches:
+            yield match
+
+
+            
