@@ -10,13 +10,12 @@ from regex_utils import MONTH_SHORTNAMES
 
 from date_classes import DateExpression, DateMatch
 
+#associated parse functions for each type of DateExpression in use
 
-def mdy_parse(date_match: Match | DateMatch):
+def mdy_parse(date_match:  DateMatch):
+    pass
 
-    if isinstance(date_match, DateMatch):
-        date_match = date_match.match_obj
 
-    month, day = date_match.groupdict
 
 
     

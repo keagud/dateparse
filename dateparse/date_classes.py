@@ -17,13 +17,21 @@ class DateExpression:
     parse_func: Callable[[None], date]
 
 
-@dataclass(frozen=True, kw_only=True)
 class DateMatch:
-    expression: DateExpression
-    start_index: int
-    end_index: int
-    content: str
-    match_obj: Match
+    # TODO depending on performance, may want to use __slots__
+    # this would prevent the use of setattr and thus direct use of dot syntax for group labels
+    # which would impact readability, but not much else
+    def __init__(self, expression: DateExpression, match_obj: Match) -> None:
+
+        self.expression = expression
+        self.start_index, self.end_index = match_obj.span()
+        self.content: str = match_obj.group()
+        self.base_match = match_obj
+
+        self.match_groups = match_obj.groupdict()
+
+        for label, match_content in self.match_groups:
+            setattr(self, label, match_content)
 
 
 class DateIter:
@@ -47,9 +55,6 @@ class DateIter:
             matches = [
                 DateMatch(
                     expression=match_expr,
-                    content=match.group(),
-                    start_index=match.start(),
-                    end_index=match.end(),
                     match_obj=match,
                 )
                 for match in match_iter
