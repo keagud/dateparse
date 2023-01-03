@@ -36,7 +36,14 @@ WEEKDAY_SHORTNAMES = [
 ]  # one-indexed for symmetry with MONTH_SHORTNAMES[] mostly
 
 
-TIME_INTERVAL_TYPES = ["day", "week", "month", "year"]
+TIME_INTERVAL_TYPES = {
+    "day": 1,
+    "week": 7,
+    # TODO there's not always 30 days in a month - address this
+    "month": 30,
+    "year": 365,
+}
+
 
 NEGATIVE_INTERVAL_WORDS = ["before"]
 POSITIVE_INTERVAL_WORDS = ["from", "after"]
@@ -65,7 +72,7 @@ def list_to_regex(input_list: list[str]) -> str:
 # make regex pattern strings
 MONTHS_MATCH_REGEX = list_to_regex(MONTH_SHORTNAMES)
 WEEKDAY_MATCH_REGEX = list_to_regex(WEEKDAY_SHORTNAMES)
-TIME_INTERVAL_REGEX = list_to_regex(TIME_INTERVAL_TYPES)
+TIME_INTERVAL_REGEX = list_to_regex(list(TIME_INTERVAL_TYPES.keys()))
 NUMBER_WORDS_REGEX = list_to_regex(NUMBER_WORDS)
 
 INTERVAL_PREPOSITION_REGEX = (

@@ -18,20 +18,24 @@ class DateExpression:
 
 
 class DateMatch:
-    # TODO depending on performance, may want to use __slots__
-    # this would prevent the use of setattr and thus direct use of dot syntax for group labels
-    # which would impact readability, but not much else
+    __slots__ = (
+        "expression",
+        "start_index",
+        "end_index",
+        "content",
+        "base_match",
+        "match_groups",
+    )
+
     def __init__(self, expression: DateExpression, match_obj: Match) -> None:
 
-        self.expression = expression
-        self.start_index, self.end_index = match_obj.span()
+        self.expression: DateExpression = expression
+        self.start_index: int = match_obj.start()
+        self.end_index: int = match_obj.end()
         self.content: str = match_obj.group()
-        self.base_match = match_obj
+        self.base_match: Match[str] = match_obj
 
-        self.match_groups = match_obj.groupdict()
-
-        for label, match_content in self.match_groups:
-            setattr(self, label, match_content)
+        self.match_groups: dict = match_obj.groupdict()
 
 
 class DateIter:
