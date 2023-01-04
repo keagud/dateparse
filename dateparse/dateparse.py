@@ -6,9 +6,10 @@ from itertools import groupby
 from typing import Iterator
 from operator import add
 
-from .date_classes import DateMatch
-from .date_classes import DateIter
-from .date_classes import date_expressions as defined_date_exprs
+from ._parse_util import DateMatch
+from ._parse_util import DateMatch
+from ._parse_util import DateIter
+from ._parse_util import date_expressions as defined_date_exprs
 
 
 class DateParser:
@@ -42,12 +43,12 @@ class DateParser:
         return ((match) for match in date_iter)
 
     def parse_date_match(self, date_match: DateMatch) -> date | timedelta:
-        return date_match.to_date(base_date=self.current_date)
+        return date_match.to_date(self.current_date)
 
     def parse_tokens(
         self, match_iter: Iterator[DateMatch]
     ) -> Iterator[date | timedelta]:
-        return ((match.to_date()) for match in match_iter)
+        return ((match.to_date(self.current_date)) for match in match_iter)
 
     def parse_date(self, text: str) -> date:
         """

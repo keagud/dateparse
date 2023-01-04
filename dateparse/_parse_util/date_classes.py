@@ -49,8 +49,8 @@ class DateMatch:
 
         self.match_groups: dict = match_obj.groupdict()
 
-    def to_date(self, *args, **kwargs):
-        return self.expression.parse_func(self, *args, **kwargs)
+    def to_date(self, current_date: date):
+        return self.expression.parse_func(self, current_date)
 
 
 class DateIter:
