@@ -75,7 +75,7 @@ def n_intervals_parse(date_match: DateMatch | dict[str, str], base_date: date) -
 
 def relative_weekday_parse(
     date_match: DateMatch | dict[str, str], base_date: date
-) -> date:  # type:ignore
+) -> date:
     date_match = match_to_dict(date_match)
 
     specifier = date_match["specifier"]
@@ -85,7 +85,21 @@ def relative_weekday_parse(
 
     days_delta = weekday_num - base_date.isoweekday()
 
+    # TODO refactor this to be less bad
     if days_delta <= 0:
         days_delta += 7
 
+    if days_delta < 7 and specifier == "next":
+        days_delta += 7
+
     return base_date + timedelta(days=days_delta)
+
+
+date_expressions = (
+    DateExpression(pattern=MDY_DATE_PATTERN, parse_func=mdy_parse),
+    DateExpression(
+        pattern=RELATIVE_INTERVAL_PATTERN, parse_func=relative_interval_parse
+    ),
+    DateExpression(pattern=IN_N_INTERVALS_PATTERN, parse_func=n_intervals_parse),
+    DateExpression(pattern=RELATIVE_WEEKDAY_PATTERN, parse_func=relative_weekday_parse),
+)

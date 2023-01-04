@@ -5,6 +5,7 @@ from re import finditer
 
 from typing import Iterable
 from typing import Callable
+from typing import Any
 
 from datetime import date
 from dataclasses import dataclass
@@ -13,8 +14,8 @@ from dataclasses import dataclass
 @dataclass(frozen=True, kw_only=True)
 class DateExpression:
     pattern: Pattern
-    is_absolute: bool
-    parse_func: Callable[[None], date]
+    parse_func: Callable[..., date]
+    is_absolute: bool = True
 
 
 class DateMatch:
@@ -36,6 +37,9 @@ class DateMatch:
         self.base_match: Match[str] = match_obj
 
         self.match_groups: dict = match_obj.groupdict()
+
+    def to_date(self):
+        return self.expression.parse_func(self)
 
 
 class DateIter:

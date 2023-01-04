@@ -4,6 +4,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 
 from datetime import date
+from typing import Iterable
 
 
 Date_Formats = {"ISO": "%Y-%m-%d"}
@@ -33,7 +34,8 @@ WEEKDAY_SHORTNAMES = [
     "fri",
     "sat",
     "sun",
-]  # one-indexed for symmetry with MONTH_SHORTNAMES[] mostly
+]  # one-indexed for symmetry with MONTH_SHORTNAMES[],
+# and to line up with datetime.date.isoweekday()
 
 
 TIME_INTERVAL_TYPES = {
@@ -62,29 +64,27 @@ NUMBER_WORDS = [
     "ten",
 ]
 
-# utility function to convert a list of strings to a
+# utility function to convert an iterable to a
 # regex pattern string matching any element in the list
 # returned as a string rather than re.Pattern to allow further recombination
-def list_to_regex(input_list: list[str]) -> str:
-    return "|".join([s for s in input_list if s])
+def iter_to_regex(input_list: Iterable) -> str:
+    return "|".join([str(s) for s in input_list if s])
 
 
 # make regex pattern strings
-MONTHS_MATCH_REGEX = list_to_regex(MONTH_SHORTNAMES)
-WEEKDAY_MATCH_REGEX = list_to_regex(WEEKDAY_SHORTNAMES)
-TIME_INTERVAL_REGEX = list_to_regex(list(TIME_INTERVAL_TYPES.keys()))
-NUMBER_WORDS_REGEX = list_to_regex(NUMBER_WORDS)
+MONTHS_MATCH_REGEX = iter_to_regex(MONTH_SHORTNAMES)
+WEEKDAY_MATCH_REGEX = iter_to_regex(WEEKDAY_SHORTNAMES)
+TIME_INTERVAL_REGEX = iter_to_regex(TIME_INTERVAL_TYPES.keys())
+NUMBER_WORDS_REGEX = iter_to_regex(NUMBER_WORDS)
 
 INTERVAL_PREPOSITION_REGEX = (
-    list_to_regex(POSITIVE_INTERVAL_WORDS)
+    iter_to_regex(POSITIVE_INTERVAL_WORDS)
     + "|"
-    + list_to_regex(NEGATIVE_INTERVAL_WORDS)
+    + iter_to_regex(NEGATIVE_INTERVAL_WORDS)
 )
 
-# if additional named days beyond the defaults were specified, include those
 
 # compile patterns
-
 # of the form "oct 20" "october 20" "10-20-2023
 MDY_DATE_PATTERN = re.compile(
     r"(?P<month>"
@@ -114,44 +114,3 @@ IN_N_INTERVALS_PATTERN = re.compile(
 RELATIVE_WEEKDAY_PATTERN = re.compile(
     r"(?P<specifier>this|next)?[^\n\d\w]*(?P<weekday_name>" + WEEKDAY_MATCH_REGEX + ")"
 )
-
-
-@dataclass(frozen=True, kw_only=True)
-class DatePatterns:
-
-    month_day: Pattern = MDY_DATE_PATTERN
-    in_n_intervals: Pattern = IN_N_INTERVALS_PATTERN
-    relative_weekday: Pattern = RELATIVE_WEEKDAY_PATTERN
-    relative_interval: Pattern = RELATIVE_INTERVAL_PATTERN
-    named_days: Pattern
-
-    def get_absolute_patterns(self) -> list[Pattern]:
-        return [self.month_day, self.in_n_intervals, self.relative_weekday]
-
-    def __iter__(self):
-        for p in self.get_absolute_patterns():
-            yield p
-
-        yield self.relative_interval
-        yield self.named_days
-
-
-@dataclass(frozen=True)
-class DatePattern:
-    pattern: re.Pattern
-    is_absolute: bool
-
-    pass
-
-
-@dataclass(frozen=True, kw_only=True)
-class DateMatch:
-    content: str
-    start_index: int
-    end_index: int
-    is_absolute: bool
-
-
-class DateIter:
-    def __init__(self, input_text: str, named_days: dict = {}) -> None:
-        pass

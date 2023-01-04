@@ -1,9 +1,17 @@
 import re
-from re import Match
+
+from re import Match,Pattern
 from datetime import date, timedelta
 from itertools import chain
 
-from regex_utils import DatePatterns, list_to_regex
+from regex_utils import iter_to_regex
+
+from date_classes import DateExpression
+from date_classes import DateMatch
+from date_classes import DateIter
+
+
+from parse_funcs import date_expressions
 
 
 class DateParser:
@@ -21,7 +29,7 @@ class DateParser:
             self.named_days.update(named_days)
 
         _named_day_titles = list(self.named_days.keys())
-        _named_days_regex = re.compile(list_to_regex(_named_day_titles))
+        _named_days_regex = re.compile(iter_to_regex(_named_day_titles))
 
         self.date_patterns = DatePatterns(named_days=_named_days_regex)
 
