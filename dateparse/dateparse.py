@@ -4,14 +4,14 @@ from re import Match,Pattern
 from datetime import date, timedelta
 from itertools import chain
 
-from regex_utils import iter_to_regex
+from .regex_utils import iter_to_regex
 
-from date_classes import DateExpression
-from date_classes import DateMatch
-from date_classes import DateIter
+from .date_classes import DateExpression
+from .date_classes import DateMatch
+from .date_classes import DateIter
 
 
-from parse_funcs import date_expressions
+from .parse_funcs import date_expressions
 
 
 class DateParser:

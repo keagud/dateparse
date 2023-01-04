@@ -6,17 +6,17 @@ from itertools import chain
 from functools import wraps
 from typing import Callable
 
-from regex_utils import TIME_INTERVAL_TYPES
-from regex_utils import NEGATIVE_INTERVAL_WORDS, POSITIVE_INTERVAL_WORDS
-from regex_utils import WEEKDAY_SHORTNAMES
-from regex_utils import MONTH_SHORTNAMES
+from .regex_utils import TIME_INTERVAL_TYPES
+from .regex_utils import NEGATIVE_INTERVAL_WORDS, POSITIVE_INTERVAL_WORDS
+from .regex_utils import WEEKDAY_SHORTNAMES
+from .regex_utils import MONTH_SHORTNAMES
 
-from regex_utils import MDY_DATE_PATTERN
-from regex_utils import IN_N_INTERVALS_PATTERN
-from regex_utils import RELATIVE_WEEKDAY_PATTERN
-from regex_utils import RELATIVE_INTERVAL_PATTERN
+from .regex_utils import MDY_DATE_PATTERN
+from .regex_utils import IN_N_INTERVALS_PATTERN
+from .regex_utils import RELATIVE_WEEKDAY_PATTERN
+from .regex_utils import RELATIVE_INTERVAL_PATTERN
 
-from date_classes import DateExpression, DateMatch
+from .date_classes import DateExpression, DateMatch
 
 
 def match_to_dict(obj: DateMatch | dict[str, str]) -> dict[str, str]:

@@ -2,7 +2,7 @@ import pytest, yaml, datetime
 
 from dateparse.dateparse import DateParser
 
-with open("testing_setup.yaml", "r") as infile:
+with open("./testing_setup.yaml", "r") as infile:
     test_data = yaml.full_load(infile)
     print("Loaded test values from testing_setup.yaml")
 
