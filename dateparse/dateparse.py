@@ -1,8 +1,5 @@
 from functools import reduce
-from re import Match, Pattern
 from datetime import date, timedelta
-from itertools import takewhile
-from itertools import groupby
 from typing import Iterator
 from operator import add
 
