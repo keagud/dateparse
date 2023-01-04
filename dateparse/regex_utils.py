@@ -71,6 +71,7 @@ def iter_to_regex(input_list: Iterable) -> str:
     return "|".join([str(s) for s in input_list if s])
 
 
+whitespace_buffer = r"(?:\s*)"
 # make regex pattern strings
 MONTHS_MATCH_REGEX = iter_to_regex(MONTH_SHORTNAMES)
 WEEKDAY_MATCH_REGEX = iter_to_regex(WEEKDAY_SHORTNAMES)
@@ -87,30 +88,40 @@ INTERVAL_PREPOSITION_REGEX = (
 # compile patterns
 # of the form "oct 20" "october 20" "10-20-2023
 MDY_DATE_PATTERN = re.compile(
-    r"(?P<month>"
+    whitespace_buffer
+    + r"(?P<month>"
     + MONTHS_MATCH_REGEX
     + r"|\d+)[^\d\n]+?(?P<day>\d{1,2})(?P<year>[^\d\n]+\d{4})?"
+    + whitespace_buffer
 )
 
 # phrases of the form "a week from"
 RELATIVE_INTERVAL_PATTERN = re.compile(
-    r"(?P<time_unit_count>a\s*|"
+    whitespace_buffer
+    + r"(?P<time_unit_count>a\s*|"
     + NUMBER_WORDS_REGEX
     + r")?\s*(?P<time_interval_name>"
     + TIME_INTERVAL_REGEX
     + r")\w*[^\n\d\w]*(?P<preposition>"
     + INTERVAL_PREPOSITION_REGEX
     + ")"
+    + whitespace_buffer
 )
 
 # phrases of the form "in ten days", "in two weeks"
 IN_N_INTERVALS_PATTERN = re.compile(
-    r"in[^\n\d\w](?P<days_number>\w+|a)[^\n\d\w](?P<time_interval_name>"
+    whitespace_buffer
+    + r"in[^\n\d\w](?P<days_number>\w+|a)[^\n\d\w](?P<time_interval_name>"
     + TIME_INTERVAL_REGEX
     + r")\w*?"
+    + whitespace_buffer
 )
 
 # phrases of the form "this sunday", "next wednesday"
 RELATIVE_WEEKDAY_PATTERN = re.compile(
-    r"(?P<specifier>this|next)?[^\n\d\w]*(?P<weekday_name>" + WEEKDAY_MATCH_REGEX + ")"
+    whitespace_buffer
+    + r"(?P<specifier>this|next)?[^\n\d\w]*(?P<weekday_name>"
+    + WEEKDAY_MATCH_REGEX
+    + ")"
+    + whitespace_buffer
 )

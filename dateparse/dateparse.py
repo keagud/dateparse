@@ -1,17 +1,14 @@
-import re
-
-from re import Match,Pattern
+from functools import reduce
+from re import Match, Pattern
 from datetime import date, timedelta
-from itertools import chain
+from itertools import takewhile
+from itertools import groupby
+from typing import Iterator
+from operator import add
 
-from .regex_utils import iter_to_regex
-
-from .date_classes import DateExpression
 from .date_classes import DateMatch
 from .date_classes import DateIter
-
-
-from .parse_funcs import date_expressions
+from .date_classes import date_expressions as defined_date_exprs
 
 
 class DateParser:
@@ -21,6 +18,8 @@ class DateParser:
         self, current_date: date | None = None, named_days: dict[str, str] | None = None
     ) -> None:
 
+        self.date_expressions = defined_date_exprs
+
         self.current_date = current_date if current_date is not None else date.today()
 
         self.named_days = self.default_named_days
@@ -28,57 +27,53 @@ class DateParser:
         if named_days is not None:
             self.named_days.update(named_days)
 
-        _named_day_titles = list(self.named_days.keys())
-        _named_days_regex = re.compile(iter_to_regex(_named_day_titles))
+    def sub_named_days(self, text: str):
 
-        self.date_patterns = DatePatterns(named_days=_named_days_regex)
+        text = text.lower()
 
-        for x in self.date_patterns:
-            pass
+        for day_name, repl_str in self.named_days.items():
+            if day_name in text:
+                text = text.replace(day_name, repl_str)
+        return text
 
-    def _list_all_matches(
-        self,
-        text: str,
-        patterns: list[re.Pattern[str]] | list[str],
-        reverse: bool = False,
-    ) -> list[Match[str]]:
+    def iter_match_tokens(self, text: str) -> Iterator[DateMatch]:
+        text = self.sub_named_days(text)
+        date_iter = DateIter(text, self.date_expressions)
+        return ((match) for match in date_iter)
 
+    def parse_date_match(self, date_match: DateMatch) -> date | timedelta:
+        return date_match.to_date(base_date=self.current_date)
+
+    def parse_tokens(
+        self, match_iter: Iterator[DateMatch]
+    ) -> Iterator[date | timedelta]:
+        return ((match.to_date()) for match in match_iter)
+
+    def parse_date(self, text: str) -> date:
         """
-        Returns a list of all matches for any of the given patterns in the text,
-        iterating left to right, or right to left if reversed is specified.
+        Main wrapper method for converting a complex string expression to a datetime.date object.
+        Input: text as a string
+        Output: datetime.date object
+        If no known date format patterns are matched, raises a ValueError
         """
 
-        comp_patterns: list[re.Pattern] = [
-            re.compile(p) if not isinstance(p, re.Pattern) else p for p in patterns
-        ]
+        text_lower = self.sub_named_days(text)
+        dates_iter = self.parse_tokens(self.iter_match_tokens(text_lower))
 
-        match_iterators = [re.finditer(pattern, text) for pattern in comp_patterns]
-        matches_list = list(chain.from_iterable(match_iterators))
+        deltas: list[timedelta] = []
 
-        matches_list.sort(key=lambda x: x.start(), reverse=reverse)
+        abs_date: date | None = None
 
-        return matches_list
+        for date_item in dates_iter:
+            if not isinstance(date_item, timedelta):
+                abs_date = date_item
+                break
 
-    def _get_match_name(self, match: Match) -> str | None:
-        for name, pattern in vars(self.date_patterns).items():
-            if pattern == match.re:
-                return name
+            deltas.append(date_item)
 
-    def tokenize_date_string(self, text: str) -> list[Match]:
-        """Break an input string into a list of tokens matching a date pattern"""
-        return self._list_all_matches(text, list(self.date_patterns))
+        if abs_date is None:
+            raise ValueError(f"Could not find a date anchor in input text '{text}'")
 
-    def parse_date_token(self, token: str | Match[str]) -> date:  # type: ignore
-        """Converts a single date token (e.g. 'October 11', 'Christmas', 'tomorrow') into a datetime.date object."""
+        offset: timedelta = reduce(add, deltas) if deltas else timedelta(days=0)
 
-        #  if token.lower() in ((d.lower()) for d in self.named_days):
-
-        pass
-
-    def parse_timedelta_token(token: str) -> timedelta:  # type: ignore
-        """Converts a string representing a time interval (e.g. 'a week from', 'the day after') into a datetime.timedelta object."""
-        pass
-
-    def evaluate_date_tokens(date_token: date, deltas=list[timedelta] | None) -> date:  # type: ignore
-        """Takes a datetime.date object and an optional list of datetime.timedelta objects. Sums the date with the timedeltas."""
-        pass
+        return abs_date + offset
