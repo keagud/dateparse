@@ -2,8 +2,11 @@ from re import Pattern
 from re import Match
 from re import finditer
 
+import logging
+from pprint import pformat
+
 from .regex_utils import TIME_INTERVAL_TYPES
-from .regex_utils import NEGATIVE_INTERVAL_WORDS, POSITIVE_INTERVAL_WORDS
+from .regex_utils import NEGATIVE_INTERVAL_WORDS
 from .regex_utils import WEEKDAY_SHORTNAMES
 from .regex_utils import MONTH_SHORTNAMES
 
@@ -12,8 +15,11 @@ from .regex_utils import IN_N_INTERVALS_PATTERN
 from .regex_utils import RELATIVE_WEEKDAY_PATTERN
 from .regex_utils import RELATIVE_INTERVAL_PATTERN
 
+from .regex_utils import NUMBER_WORDS
+
 
 from typing import Iterable
+from typing import Iterator
 from typing import Callable
 
 from datetime import date
@@ -24,9 +30,17 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, kw_only=True)
 class DateExpression:
+    parse_func: Callable
     pattern: Pattern
-    parse_func: Callable[..., date | timedelta]
     is_absolute: bool = True
+
+
+class AbsoluteDateExpression(DateExpression):
+    parse_func: Callable[..., date]
+
+
+class DeltaDateExpression(DateExpression):
+    parse_func: Callable[..., timedelta]
 
 
 class DateMatch:
@@ -44,21 +58,29 @@ class DateMatch:
         self.expression: DateExpression = expression
         self.start_index: int = match_obj.start()
         self.end_index: int = match_obj.end()
-        self.content: str = match_obj.group()
+        self.content: str = match_obj.group().strip()
         self.base_match: Match[str] = match_obj
 
         self.match_groups: dict = match_obj.groupdict()
+
+        logging.debug(
+            "\n====\nCreated new DateMatch: \n\tPattern: %s\n\n\tSpan: %d - %d\n\tContent: %s\n====\n",
+            self.expression.pattern,
+            self.start_index,
+            self.end_index,
+            self.content,
+        )
 
     def to_date(self, current_date: date):
         return self.expression.parse_func(self, current_date)
 
 
-class DateIter:
+class DateGroups:
     def __init__(
         self,
         text: str,
         expressions: Iterable[DateExpression],
-        reversed: bool = True,
+        reversed: bool = False,
         consecutive: bool = True,
     ) -> None:
         self.text = text
@@ -66,29 +88,43 @@ class DateIter:
         self.reversed = reversed
         self.consecutive = consecutive
 
-    def _get_consecutive(self, matches_list: list[DateMatch]) -> list[DateMatch]:
+    def _get_consecutive(self, matches_list: list[DateMatch]) -> list[list[DateMatch]]:
         """
-        Given a list of DateMatch objects, returns the initial segment of objects that are consecutive within the original string.
+        Given a list of DateMatch objects, groups them based on the segments that are consecutive within the original string.
         """
 
-        # TODO refactor to be less ugly
+        match_groups: list[list[DateMatch]] = []
+        group: list[DateMatch] = []
+
         prev: DateMatch | None = None
-        consecutive_list = []
-
         for match in matches_list:
             if prev is not None:
-                forward_diff = abs(match.start_index - prev.end_index)
-                backward_diff = abs(match.end_index - prev.start_index)
+                # rule out matches fully contained within other matches
+                if (
+                    prev.start_index <= match.start_index
+                    and prev.end_index >= match.end_index
+                ):
 
-                if forward_diff > 1 or backward_diff > 1:
-                    break
+                    continue
+                start_diff = abs(match.start_index - prev.end_index)
+                end_diff = abs(match.end_index - prev.start_index)
 
-            consecutive_list.append(match)
+                if start_diff > 1 and end_diff > 1:
+                    match_groups.append(group)
+                    group = []
+
+            group.append(match)
             prev = match
+        match_groups.append(group)
 
-        return consecutive_list
+        logging.debug(
+            "Consecutive grouping: %s",
+            pformat([[d.content for d in s] for s in match_groups]),
+        )
 
-    def __iter__(self):
+        return match_groups
+
+    def get_groups(self) -> list[list[DateMatch]]:
 
         all_matches: list[DateMatch] = []
 
@@ -109,25 +145,27 @@ class DateIter:
 
             all_matches.extend(matches)
 
-        all_matches.sort(key=lambda x: x.start_index, reverse=self.reversed)
+        all_matches.sort(key=lambda x: x.start_index)
 
-        if self.consecutive:
-            all_matches = self._get_consecutive(all_matches)
-
-        for match in all_matches:
-
-            yield match
-
-    def __next__(self):
-        pass
-
-
+        return self._get_consecutive(all_matches)
 
 
 def match_to_dict(obj: DateMatch | dict[str, str]) -> dict[str, str]:
     if isinstance(obj, DateMatch):
         return obj.match_groups
     return obj
+
+
+def normalize_number(number_term: str) -> int:
+    if number_term.isnumeric():
+        return int(number_term)
+
+    if number_term and number_term in NUMBER_WORDS:
+        return NUMBER_WORDS.index(number_term)
+
+    raise ValueError(
+        f"Format required a number but '{number_term}' could not be converted to one"
+    )
 
 
 def mdy_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> date:
@@ -153,7 +191,7 @@ def n_intervals_parse(date_match: DateMatch | dict[str, str], base_date: date) -
 
     date_match = match_to_dict(date_match)
 
-    days_num = int(date_match["days_number"])
+    days_num = normalize_number(date_match["days_number"])
     interval_name_str = date_match["time_interval_name"]
 
     days_offset = timedelta(days=TIME_INTERVAL_TYPES[interval_name_str] * days_num)
@@ -182,13 +220,14 @@ def relative_weekday_parse(
 
     return base_date + timedelta(days=days_delta)
 
+
 def relative_interval_parse(
     date_match: dict[str, str] | DateMatch, base_date: date
 ) -> timedelta:
 
     date_match = match_to_dict(date_match)
 
-    unit_count = int(date_match["time_unit_count"])
+    unit_count = normalize_number(date_match["time_unit_count"])
     interval_name_str = date_match["time_interval_name"]
     preposition = date_match["preposition"]
     days_offset = timedelta(days=unit_count * TIME_INTERVAL_TYPES[interval_name_str])
@@ -199,14 +238,17 @@ def relative_interval_parse(
     return days_offset
 
 
-
 date_expressions = (
-    DateExpression(pattern=MDY_DATE_PATTERN, parse_func=mdy_parse),
-    DateExpression(
+    AbsoluteDateExpression(pattern=MDY_DATE_PATTERN, parse_func=mdy_parse),
+    AbsoluteDateExpression(
+        pattern=IN_N_INTERVALS_PATTERN, parse_func=n_intervals_parse
+    ),
+    AbsoluteDateExpression(
+        pattern=RELATIVE_WEEKDAY_PATTERN, parse_func=relative_weekday_parse
+    ),
+    DeltaDateExpression(
         pattern=RELATIVE_INTERVAL_PATTERN,
         parse_func=relative_interval_parse,
         is_absolute=False,
     ),
-    DateExpression(pattern=IN_N_INTERVALS_PATTERN, parse_func=n_intervals_parse),
-    DateExpression(pattern=RELATIVE_WEEKDAY_PATTERN, parse_func=relative_weekday_parse),
 )

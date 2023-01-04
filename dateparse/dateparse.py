@@ -1,12 +1,21 @@
 from functools import reduce
 from datetime import date, timedelta
+from pprint import pformat
 from typing import Iterator
+from typing import Iterable
 from operator import add
+
+import logging
+
 
 from ._parse_util import DateMatch
 from ._parse_util import DateMatch
-from ._parse_util import DateIter
+from ._parse_util import DateGroups
+from ._parse_util import AbsoluteDateExpression, DeltaDateExpression
 from ._parse_util import date_expressions as defined_date_exprs
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class DateParser:
@@ -34,20 +43,46 @@ class DateParser:
                 text = text.replace(day_name, repl_str)
         return text
 
-    def iter_match_tokens(self, text: str) -> Iterator[DateMatch]:
+    def group_match_tokens(self, text: str) -> DateGroups:
         text = self.sub_named_days(text)
-        date_iter = DateIter(text, self.date_expressions)
-        return ((match) for match in date_iter)
+        return DateGroups(text, self.date_expressions)
 
     def parse_date_match(self, date_match: DateMatch) -> date | timedelta:
         return date_match.to_date(self.current_date)
 
-    def parse_tokens(
-        self, match_iter: Iterator[DateMatch]
-    ) -> Iterator[date | timedelta]:
-        return ((match.to_date(self.current_date)) for match in match_iter)
+    def parse_tokens(self, match_iter: Iterable[DateMatch]) -> date:
 
-    def parse_date(self, text: str) -> date:
+        """
+        Takes an iterable consisting of an AbsoluteDateExpression preceeded by any number of DeltaDateExpressions
+        Returns the date object representing the absolute expression + the sum of all deltas
+        Any deltas that come after the absolute expression are ignored.
+        """
+
+        logging.debug("\nENTERING PARSE_TOKENS WITH PARAMS: %s", pformat([m.content for m in match_iter]))
+
+        offset: list[timedelta] = [timedelta(days=0)]
+        anchor_date: date | None = None
+
+        for match in match_iter:
+
+            logging.debug("\ttoken: %s", match.content)
+            if isinstance(match.expression, AbsoluteDateExpression):
+                logging.debug("\tAnchor date: %s", match.content)
+                anchor_date = match.to_date(self.current_date)
+                break
+
+            offset.append(match.to_date(self.current_date))
+
+            logging.debug("\tDelta: %s as %s", pformat(match.content), str(match.to_date(self.current_date)))
+
+        if anchor_date is None:
+            raise ValueError(
+                f"Unable to parse as a date: {' '.join([c.content for c in match_iter])}"
+            )
+
+        return anchor_date + reduce(add, offset)
+
+    def extract_and_parse(self, text: str) -> date:
         """
         Main wrapper method for converting a complex string expression to a datetime.date object.
         Input: text as a string
@@ -55,23 +90,13 @@ class DateParser:
         If no known date format patterns are matched, raises a ValueError
         """
 
-        text_lower = self.sub_named_days(text)
-        dates_iter = self.parse_tokens(self.iter_match_tokens(text_lower))
+        groups = self.group_match_tokens(text).get_groups()
 
-        deltas: list[timedelta] = []
+        if not groups:
+            raise ValueError(
+                f"Could not match against any date expression types: {text}"
+            )
 
-        abs_date: date | None = None
+        last_expr_tokens = groups[-1]
 
-        for date_item in dates_iter:
-            if not isinstance(date_item, timedelta):
-                abs_date = date_item
-                break
-
-            deltas.append(date_item)
-
-        if abs_date is None:
-            raise ValueError(f"Could not find a date anchor in input text '{text}'")
-
-        offset: timedelta = reduce(add, deltas) if deltas else timedelta(days=0)
-
-        return abs_date + offset
+        return self.parse_tokens(last_expr_tokens)
