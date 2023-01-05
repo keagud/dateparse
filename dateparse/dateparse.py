@@ -105,11 +105,26 @@ class DateParser:
 
         # add the delta sum to anchor for the final result
 
-        return date(
-            day=anchor_date.day + total_offsets["day"],
-            month=anchor_date.month + total_offsets["month"],
-            year=anchor_date.year + total_offsets["year"],
-        )
+        parsed_date_values = {
+            "day": anchor_date.day + total_offsets["day"],
+            "month": anchor_date.month + total_offsets["month"],
+            "year": anchor_date.year + total_offsets["year"],
+        }
+
+        if not 0 < parsed_date_values["month"] < 13:
+            month_val = parsed_date_values["month"]
+            adjusted_month = ((month_val -1 ) % 12) + 1
+            year_offset = ((month_val -1 ) // 12)
+
+            parsed_date_values['month'] = adjusted_month
+            parsed_date_values['year'] += year_offset
+
+        parsed_date = date(**parsed_date_values)
+
+        if parsed_date < self.current_date:
+            parsed_date = parsed_date.replace(year=self.current_date.year + 1)
+
+        return parsed_date
 
     def extract_and_parse(self, text: str) -> date:
         """
