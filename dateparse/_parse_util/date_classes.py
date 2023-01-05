@@ -27,12 +27,16 @@ from .regex_utils import RELATIVE_INTERVAL_PATTERN
 from .regex_utils import NUMBER_WORDS
 
 
-@dataclass(frozen=True, kw_only=True)
 class DateDelta:
-    days: int = 0
-    weeks: int = 0
-    months: int = 0
-    years: int = 0
+    def __init__(
+        self, day: int = 0, week: int = 0, month: int = 0, year: int = 0
+    ) -> None:
+        if not week == 0:
+            self.day = week * 7
+
+        self.day = day
+        self.month = month
+        self.year = year
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -247,11 +251,12 @@ def relative_interval_parse(
     interval_name_str = date_match["time_interval_name"]
     preposition = date_match["preposition"]
 
-    if not interval_name_str.endswith("s"):
-        interval_name_str += "s"
-
     if preposition in NEGATIVE_INTERVAL_WORDS:
         units_count *= -1
+
+    if interval_name_str == "week":
+        interval_name_str = "day"
+        units_count *= 7
 
     return DateDelta(**{interval_name_str: units_count})
 

@@ -5,10 +5,11 @@ from typing import Iterable
 from operator import add
 from itertools import chain
 
+from dataclasses import asdict
+
 import sys
 
 import logging
-
 
 
 from ._parse_util import DateMatch
@@ -19,7 +20,7 @@ from ._parse_util import DateDelta
 from ._parse_util import date_expressions as defined_date_exprs
 
 
-if sys.argv[1].lower() == "debug":
+if len(sys.argv) > 1 and sys.argv[1].lower() == "debug":
     logging.basicConfig(level=logging.DEBUG)
 
 
@@ -92,17 +93,23 @@ class DateParser:
                 f"Unable to parse as a date: {' '.join([c.content for c in match_iter])}"
             )
 
-        #TODO PRIORITY finish this
-
-
-
-        anchor_vars = vars(anchor_date)
+        # determine the total amount of time to offset the anchor date
+        # by summing all deltas
+        total_offsets = {"day": 0, "month": 0, "year": 0}
 
         for delta in offset:
-            for unit, value in vars(delta).items():
-                anchor_vars[unit] += value
+            for k, v in vars(delta).items():
+                if not k in total_offsets.keys():
+                    continue
+                total_offsets[k] += v
 
+        # add the delta sum to anchor for the final result
 
+        return date(
+            day=anchor_date.day + total_offsets["day"],
+            month=anchor_date.month + total_offsets["month"],
+            year=anchor_date.year + total_offsets["year"],
+        )
 
     def extract_and_parse(self, text: str) -> date:
         """
