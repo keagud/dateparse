@@ -31,7 +31,7 @@ class DateDelta:
     def __init__(
         self, day: int = 0, week: int = 0, month: int = 0, year: int = 0
     ) -> None:
-        if not week == 0:
+        if week != 0:
             self.day = week * 7
 
         self.day = day
@@ -75,7 +75,7 @@ class DateMatch:
         self.match_groups: dict = match_obj.groupdict()
 
         logging.debug(
-            "\n====\nCreated new DateMatch: \n\tPattern: %s\n\n\tSpan: %d - %d\n\tContent: %s\n====\n",
+            "Created new DateMatch: \n\tPattern: %s" "\n\tSpan: %d - %d\n\tContent: %s",
             self.expression.pattern,
             self.start_index,
             self.end_index,
@@ -91,7 +91,6 @@ class DateGroups:
         self,
         text: str,
         expressions: Iterable[DateExpression],
-        reversed: bool = False,
         consecutive: bool = True,
     ) -> None:
         self.text = text
@@ -101,7 +100,8 @@ class DateGroups:
 
     def _get_consecutive(self, matches_list: list[DateMatch]) -> list[list[DateMatch]]:
         """
-        Given a list of DateMatch objects, groups them based on the segments that are consecutive within the original string.
+        Given a list of DateMatch objects,
+        groups them based on the segments that are consecutive within the original string.
         """
 
         match_groups: list[list[DateMatch]] = []

@@ -1,11 +1,7 @@
-from functools import reduce
 from datetime import date, timedelta
 from pprint import pformat
 from typing import Iterable
-from operator import add
-from itertools import chain
 
-from dataclasses import asdict
 
 import sys
 
@@ -13,14 +9,13 @@ import logging
 
 
 from ._parse_util import DateMatch
-from ._parse_util import DateMatch
 from ._parse_util import DateGroups
 from ._parse_util import AbsoluteDateExpression
 from ._parse_util import DateDelta
 from ._parse_util import date_expressions as defined_date_exprs
 
 
-if len(sys.argv) > 1 and sys.argv[1].lower() == "debug":
+if len(sys.argv) > 1 and sys.argv[1].lower() == "--debug":
     logging.basicConfig(level=logging.DEBUG)
 
 
@@ -59,7 +54,9 @@ class DateParser:
     def parse_tokens(self, match_iter: Iterable[DateMatch]) -> date:
 
         """
-        Takes an iterable consisting of an AbsoluteDateExpression preceeded by any number of DeltaDateExpressions
+        Takes an iterable consisting of an AbsoluteDateExpression
+        preceeded by any number of DeltaDateExpressions
+
         Returns the date object representing the absolute expression + the sum of all deltas
         Any deltas that come after the absolute expression are ignored.
         """
@@ -98,10 +95,10 @@ class DateParser:
         total_offsets = {"day": 0, "month": 0, "year": 0}
 
         for delta in offset:
-            for k, v in vars(delta).items():
-                if not k in total_offsets.keys():
+            for interval, count in vars(delta).items():
+                if not interval in total_offsets:
                     continue
-                total_offsets[k] += v
+                total_offsets[interval] += count
 
         # add the delta sum to anchor for the final result
 
@@ -113,11 +110,11 @@ class DateParser:
 
         if not 0 < parsed_date_values["month"] < 13:
             month_val = parsed_date_values["month"]
-            adjusted_month = ((month_val -1 ) % 12) + 1
-            year_offset = ((month_val -1 ) // 12)
+            adjusted_month = ((month_val - 1) % 12) + 1
+            year_offset = (month_val - 1) // 12
 
-            parsed_date_values['month'] = adjusted_month
-            parsed_date_values['year'] += year_offset
+            parsed_date_values["month"] = adjusted_month
+            parsed_date_values["year"] += year_offset
 
         parsed_date = date(**parsed_date_values)
 
