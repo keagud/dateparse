@@ -5,6 +5,15 @@ from re import finditer
 import logging
 from pprint import pformat
 
+from typing import Iterable
+from typing import Callable
+
+from datetime import date
+from datetime import timedelta
+
+from dataclasses import dataclass
+
+
 from .regex_utils import TIME_INTERVAL_TYPES
 from .regex_utils import NEGATIVE_INTERVAL_WORDS
 from .regex_utils import WEEKDAY_SHORTNAMES
@@ -18,13 +27,12 @@ from .regex_utils import RELATIVE_INTERVAL_PATTERN
 from .regex_utils import NUMBER_WORDS
 
 
-from typing import Iterable
-from typing import Callable
-
-from datetime import date
-from datetime import timedelta
-
-from dataclasses import dataclass
+@dataclass(frozen=True, kw_only=True)
+class DateDelta:
+    days: int = 0
+    weeks: int = 0
+    months: int = 0
+    years: int = 0
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -39,7 +47,7 @@ class AbsoluteDateExpression(DateExpression):
 
 
 class DeltaDateExpression(DateExpression):
-    parse_func: Callable[..., timedelta]
+    parse_func: Callable[..., DateDelta]
 
 
 class DateMatch:
@@ -159,9 +167,8 @@ def normalize_number(number_term: str) -> int:
 
     number_term = number_term.strip().lower()
 
-    if number_term in ('a', 'one', 'the'):
+    if number_term in ("a", "one", "the"):
         return 1
-
 
     if number_term.isnumeric():
         return int(number_term)
@@ -229,19 +236,24 @@ def relative_weekday_parse(
 
 def relative_interval_parse(
     date_match: dict[str, str] | DateMatch, _: date
-) -> timedelta:
+) -> DateDelta:
 
-    date_match = match_to_dict(date_match)
+    date_match = {
+        k.lower().strip(): v.lower().strip()
+        for k, v in match_to_dict(date_match).items()
+    }
 
-    unit_count = normalize_number(date_match["time_unit_count"])
+    units_count = normalize_number(date_match["time_unit_count"])
     interval_name_str = date_match["time_interval_name"]
     preposition = date_match["preposition"]
-    days_offset = timedelta(days=unit_count * TIME_INTERVAL_TYPES[interval_name_str])
+
+    if not interval_name_str.endswith("s"):
+        interval_name_str += "s"
 
     if preposition in NEGATIVE_INTERVAL_WORDS:
-        days_offset *= -1
+        units_count *= -1
 
-    return days_offset
+    return DateDelta(**{interval_name_str: units_count})
 
 
 date_expressions = (

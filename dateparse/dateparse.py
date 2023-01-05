@@ -1,21 +1,26 @@
 from functools import reduce
 from datetime import date, timedelta
 from pprint import pformat
-from typing import Iterator
 from typing import Iterable
 from operator import add
+from itertools import chain
+
+import sys
 
 import logging
+
 
 
 from ._parse_util import DateMatch
 from ._parse_util import DateMatch
 from ._parse_util import DateGroups
-from ._parse_util import AbsoluteDateExpression, DeltaDateExpression
+from ._parse_util import AbsoluteDateExpression
+from ._parse_util import DateDelta
 from ._parse_util import date_expressions as defined_date_exprs
 
 
-logging.basicConfig(level=logging.DEBUG)
+if sys.argv[1].lower() == "debug":
+    logging.basicConfig(level=logging.DEBUG)
 
 
 class DateParser:
@@ -58,9 +63,12 @@ class DateParser:
         Any deltas that come after the absolute expression are ignored.
         """
 
-        logging.debug("\nENTERING PARSE_TOKENS WITH PARAMS: %s", pformat([m.content for m in match_iter]))
+        logging.debug(
+            "\nENTERING PARSE_TOKENS WITH PARAMS: %s",
+            pformat([m.content for m in match_iter]),
+        )
 
-        offset: list[timedelta] = [timedelta(days=0)]
+        offset: list[DateDelta] = []
         anchor_date: date | None = None
 
         for match in match_iter:
@@ -73,14 +81,28 @@ class DateParser:
 
             offset.append(match.to_date(self.current_date))
 
-            logging.debug("\tDelta: %s as %s", pformat(match.content), str(match.to_date(self.current_date)))
+            logging.debug(
+                "\tDelta: %s as %s",
+                pformat(match.content),
+                str(match.to_date(self.current_date)),
+            )
 
         if anchor_date is None:
             raise ValueError(
                 f"Unable to parse as a date: {' '.join([c.content for c in match_iter])}"
             )
 
-        return anchor_date + reduce(add, offset)
+        #TODO PRIORITY finish this
+
+
+
+        anchor_vars = vars(anchor_date)
+
+        for delta in offset:
+            for unit, value in vars(delta).items():
+                anchor_vars[unit] += value
+
+
 
     def extract_and_parse(self, text: str) -> date:
         """
