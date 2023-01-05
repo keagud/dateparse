@@ -19,7 +19,6 @@ from .regex_utils import NUMBER_WORDS
 
 
 from typing import Iterable
-from typing import Iterator
 from typing import Callable
 
 from datetime import date
@@ -157,6 +156,13 @@ def match_to_dict(obj: DateMatch | dict[str, str]) -> dict[str, str]:
 
 
 def normalize_number(number_term: str) -> int:
+
+    number_term = number_term.strip().lower()
+
+    if number_term in ('a', 'one', 'the'):
+        return 1
+
+
     if number_term.isnumeric():
         return int(number_term)
 
@@ -222,7 +228,7 @@ def relative_weekday_parse(
 
 
 def relative_interval_parse(
-    date_match: dict[str, str] | DateMatch, base_date: date
+    date_match: dict[str, str] | DateMatch, _: date
 ) -> timedelta:
 
     date_match = match_to_dict(date_match)

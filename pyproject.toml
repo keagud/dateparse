@@ -15,6 +15,11 @@ datetime = "^4.9"
 pytest = "^7.2.0"
 pyyaml = "^6.0"
 
+[tool.pytest.ini_options]
+addopts = "-vvv -rA"
+testpaths = [ "tests" ] 
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

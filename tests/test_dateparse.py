@@ -1,8 +1,9 @@
 import pytest, yaml, datetime
 
-from dateparse.dateparse import DateParser
+from dateparse import DateParser
 
-with open("./testing_setup.yaml", "r") as infile:
+
+with open("tests/testing_setup.yaml", "r") as infile:
     test_data = yaml.full_load(infile)
     print("Loaded test values from testing_setup.yaml")
 
@@ -26,4 +27,4 @@ def test_parser(make_parser):
     for text, vals in tests.items():
       test_date=   datetime.date(vals[0], vals[1], vals[2])
 
-      assert make_parser.parse_complex_date(text) == test_date
+      assert make_parser.extract_and_parse(text) == test_date
