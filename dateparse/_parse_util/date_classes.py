@@ -1,3 +1,4 @@
+""" Definitions for classes representing different types of date expressions and related data """
 from re import Pattern
 from re import Match
 from re import finditer
@@ -25,7 +26,7 @@ from .regex_utils import RELATIVE_WEEKDAY_PATTERN
 from .regex_utils import RELATIVE_INTERVAL_PATTERN
 
 from .regex_utils import NUMBER_WORDS
-
+# TODO docstrings for this file
 
 class DateDelta:
     def __init__(
@@ -210,6 +211,7 @@ def n_intervals_parse(date_match: DateMatch | dict[str, str], base_date: date) -
 
     days_num = normalize_number(date_match["days_number"])
     interval_name_str = date_match["time_interval_name"]
+    #TODO months need to be fixed again here
 
     days_offset = timedelta(days=TIME_INTERVAL_TYPES[interval_name_str] * days_num)
 
@@ -228,7 +230,7 @@ def relative_weekday_parse(
 
     days_delta = weekday_num - base_date.isoweekday()
 
-    # TODO refactor this to be less bad
+    # if 
     if days_delta <= 0:
         days_delta += 7
 

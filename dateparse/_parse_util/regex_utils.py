@@ -1,8 +1,7 @@
+"""Constant definitions and pre-compilation of regex patterns"""
 from re import compile as compile_pattern
 from typing import Iterable
 
-
-Date_Formats = {"ISO": "%Y-%m-%d"}
 
 MONTH_SHORTNAMES = [
     "",
@@ -32,7 +31,7 @@ WEEKDAY_SHORTNAMES = [
 ]  # one-indexed for symmetry with MONTH_SHORTNAMES[],
 # and to line up with datetime.date.isoweekday()
 
-TIME_INTERVAL_TYPES = ["day", "week", "month", "year"]
+TIME_INTERVAL_TYPES = {"day": 1, "week": 7, "month": 30, "year": 365}
 
 
 NEGATIVE_INTERVAL_WORDS = ["before"]
