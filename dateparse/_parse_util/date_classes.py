@@ -26,18 +26,36 @@ from .regex_utils import RELATIVE_WEEKDAY_PATTERN
 from .regex_utils import RELATIVE_INTERVAL_PATTERN
 
 from .regex_utils import NUMBER_WORDS
+
 # TODO docstrings for this file
+
 
 class DateDelta:
     def __init__(
-        self, day: int = 0, week: int = 0, month: int = 0, year: int = 0
+        self,
+        day: int = 0,
+        week: int = 0,
+        month: int = 0,
+        year: int = 0,
+        srcdict: dict[str, int] | None = None,
     ) -> None:
+
+        if srcdict is not None:
+            self.day = srcdict.get("day", 0)
+            self.month = srcdict.get("month", 0)
+            self.year = srcdict.get("month", 0)
+
+            return
+
         if week != 0:
             self.day = week * 7
 
         self.day = day
         self.month = month
         self.year = year
+
+    def __dict__(self):
+        return {"day": self.day, "month": self.month, "year": self.year}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -211,7 +229,7 @@ def n_intervals_parse(date_match: DateMatch | dict[str, str], base_date: date) -
 
     days_num = normalize_number(date_match["days_number"])
     interval_name_str = date_match["time_interval_name"]
-    #TODO months need to be fixed again here
+    # TODO months need to be fixed again here
 
     days_offset = timedelta(days=TIME_INTERVAL_TYPES[interval_name_str] * days_num)
 
@@ -230,7 +248,7 @@ def relative_weekday_parse(
 
     days_delta = weekday_num - base_date.isoweekday()
 
-    # if 
+    # if
     if days_delta <= 0:
         days_delta += 7
 

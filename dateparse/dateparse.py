@@ -13,6 +13,7 @@ from datetime import date
 from pprint import pformat
 from typing import Iterable
 from typing import Iterator
+from calendar import monthrange
 
 
 import sys
@@ -205,24 +206,33 @@ class DateParser:
 
         # add the delta sum to anchor for the final result
 
-        parsed_date_values = {
+        date_vals_dict = {
             "day": anchor_date.day + total_offsets["day"],
             "month": anchor_date.month + total_offsets["month"],
             "year": anchor_date.year + total_offsets["year"],
         }
 
+        date_vals = DateDelta(srcdict=date_vals_dict)
+
         # If the new sum of months is less than 1 or greater than 12,
         # allow for wrapping into the previous or next year
 
-        if not 0 < parsed_date_values["month"] < 13:
-            month_val = parsed_date_values["month"]
+        if not 0 < date_vals.month < 13:
+            month_val = date_vals.month
             adjusted_month = ((month_val - 1) % 12) + 1
             year_offset = (month_val - 1) // 12
 
-            parsed_date_values["month"] = adjusted_month
-            parsed_date_values["year"] += year_offset
+            date_vals.month = adjusted_month
+            date_vals.year += year_offset
 
-        parsed_date = date(**parsed_date_values)
+        _, maxdays = monthrange(date_vals.year, date_vals.month)
+
+        if date_vals.day > maxdays:
+
+            date_vals.month += date_vals.day // maxdays
+            date_vals.day = date_vals.day % maxdays
+
+        parsed_date = date(**date_vals.__dict__())
 
         if parsed_date < self.current_date:
             parsed_date = parsed_date.replace(year=self.current_date.year + 1)
