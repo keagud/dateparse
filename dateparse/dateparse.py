@@ -1,6 +1,15 @@
+""" Defines the API for the main operations exposed by the Dateparse package, via the the DateParser class. """
+
+__author__ = "keagud"
+__contact__ = "keagud@protonmail.com"
+__license__ = "GPL 3.0 or later"
+__version__ = "0.9"
+
+
 from datetime import date, timedelta
 from pprint import pformat
 from typing import Iterable
+from typing import Iterator
 
 
 import sys
@@ -20,6 +29,65 @@ if len(sys.argv) > 1 and sys.argv[1].lower() == "--debug":
 
 
 class DateParser:
+    """
+    The intended interface for converting a natural language date expression into a date
+    (datetime.date) object.
+
+    Attributes:
+    ------------
+
+    current_date: datetime.date
+        The date to be used to determine how to parse expressions that require temporal context,
+        e.g. "A week from this Sunday", "In four days"
+
+        If not passed into the constructor, defaults to the current date (datetime.date.today()).
+
+    named_days: dict[str,str]
+        Aliases for date expressions; occurances of each key will be substituted for the corrisponding value before parsing begins.
+        This allows for dates of personal importance to be named directly.
+        e.g. {'my birthday': 'october 17'} will cause the string 'my birthday' to act as an alias for 'october 17'
+
+
+    Methods:
+    ___________
+
+    __init__(current_date: datetime.date | None = None, named_days: dict[str,str] | None = None,) -> None:
+        Constructor for creating a new DateParser object.
+
+    sub_named_days(text:str) -> str:
+        Substitutes each occurance of a defined alias from named_days (both passed in at init time or included from the defaults
+        list) with its corrisponding replacement string.
+
+    group_match_tokens(text:str) -> DateGroups:
+        Locates expressions in the text that match a known date pattern, and groups consecutive expressions together
+        as a DateGroups object.
+
+    parse_date_match(date_match: DateMatch) -> datetime.date | DateDelta
+        For the given DateMatch object, call its to_date() method and return the result.
+        If the DateMatch represents a modifier rather than an absolute date, returns as a DateDelta,
+        otherwise returns a datetime.date
+
+
+    parse_tokens(match_iter: Iterable[DateMatch]) -> date:
+        Returns the date created from summating DateMatch objects referring to DeltaDateExpressions (e.g. 'a week from') from the
+        match_iter iterable, until a an AbsoluteDateExpression (an expression than can unambiguously be converted to a date, potentially
+        using the current date as a reference) is encountered.
+
+        In practice, this means parse_tokens will take an iterable like ['a week from', 'the day after', 'Tuesday', 'foo'] and combine
+        the contents up to and including 'Tuesday', which it returns as a datetime.date
+
+    extract_and_parse(text: str, iter_backward: bool = False, max_dates: int = 0 ) -> Iterator[date]:
+        The main general-purpose parse method. Takes a text string, and yields datetime.date objects for each matched date expression 
+        from left to right, or right to left if iter_backward is set to True. If max_dates is specified and nonzero, only yields at most that
+        many dates before halting.
+
+    get_first(text:str) , get_last(text:str)->datetime.date
+        Wrappers for extract_and_parse to get only the leftmost or rightmost expression, respectively
+
+
+
+    """
+
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
 
     def __init__(
@@ -48,7 +116,7 @@ class DateParser:
         text = self.sub_named_days(text)
         return DateGroups(text, self.date_expressions)
 
-    def parse_date_match(self, date_match: DateMatch) -> date | timedelta:
+    def parse_date_match(self, date_match: DateMatch) -> date | DateDelta:
         return date_match.to_date(self.current_date)
 
     def parse_tokens(self, match_iter: Iterable[DateMatch]) -> date:
@@ -108,6 +176,9 @@ class DateParser:
             "year": anchor_date.year + total_offsets["year"],
         }
 
+        # If the new sum of months is less than 1 or greater than 12,
+        # allow for wrapping into the previous or next year
+
         if not 0 < parsed_date_values["month"] < 13:
             month_val = parsed_date_values["month"]
             adjusted_month = ((month_val - 1) % 12) + 1
@@ -123,7 +194,9 @@ class DateParser:
 
         return parsed_date
 
-    def extract_and_parse(self, text: str) -> date:
+    def extract_and_parse(
+        self, text: str, iter_backward: bool = False, max_dates: int = 0
+    ) -> Iterator[date]:
         """
         Main wrapper method for converting a complex string expression to a datetime.date object.
         Input: text as a string
@@ -138,6 +211,19 @@ class DateParser:
                 f"Could not match against any date expression types: {text}"
             )
 
-        last_expr_tokens = groups[-1]
+        if iter_backward:
+            groups.reverse()
 
-        return self.parse_tokens(last_expr_tokens)
+        for index, tokens in enumerate(groups, start=1):
+            yield self.parse_tokens(tokens)
+
+            if 0 < max_dates <= index:
+                break
+
+    def get_first(self, text: str) -> date:
+        gen = self.extract_and_parse(text, max_dates=1)
+        return next(gen)
+
+    def get_last(self, text: str) -> date:
+        gen = self.extract_and_parse(text, max_dates=1, iter_backward=True)
+        return next(gen)
