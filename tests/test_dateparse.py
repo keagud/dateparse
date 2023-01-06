@@ -27,4 +27,4 @@ def test_parser(make_parser):
     for text, vals in tests.items():
       test_date=   datetime.date(vals[0], vals[1], vals[2])
 
-      assert make_parser.extract_and_parse(text) == test_date
+      assert make_parser.get_first(text) == test_date
