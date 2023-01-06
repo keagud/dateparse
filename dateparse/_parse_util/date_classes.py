@@ -30,7 +30,7 @@ from .regex_utils import NUMBER_WORDS
 # TODO docstrings for this file
 
 
-class DateDelta:
+class DateValues:
     def __init__(
         self,
         day: int = 0,
@@ -43,7 +43,7 @@ class DateDelta:
         if srcdict is not None:
             self.day = srcdict.get("day", 0)
             self.month = srcdict.get("month", 0)
-            self.year = srcdict.get("month", 0)
+            self.year = srcdict.get("year", 0)
 
             return
 
@@ -70,7 +70,7 @@ class AbsoluteDateExpression(DateExpression):
 
 
 class DeltaDateExpression(DateExpression):
-    parse_func: Callable[..., DateDelta]
+    parse_func: Callable[..., DateValues]
 
 
 class DateMatch:
@@ -229,7 +229,6 @@ def n_intervals_parse(date_match: DateMatch | dict[str, str], base_date: date) -
 
     days_num = normalize_number(date_match["days_number"])
     interval_name_str = date_match["time_interval_name"]
-    # TODO months need to be fixed again here
 
     days_offset = timedelta(days=TIME_INTERVAL_TYPES[interval_name_str] * days_num)
 
@@ -260,7 +259,7 @@ def relative_weekday_parse(
 
 def relative_interval_parse(
     date_match: dict[str, str] | DateMatch, _: date
-) -> DateDelta:
+) -> DateValues:
 
     date_match = {
         k.lower().strip(): v.lower().strip()
@@ -278,7 +277,7 @@ def relative_interval_parse(
         interval_name_str = "day"
         units_count *= 7
 
-    return DateDelta(**{interval_name_str: units_count})
+    return DateValues(**{interval_name_str: units_count})
 
 
 date_expressions = (

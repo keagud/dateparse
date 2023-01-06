@@ -24,7 +24,7 @@ import logging
 from ._parse_util import DateMatch
 from ._parse_util import DateGroups
 from ._parse_util import AbsoluteDateExpression
-from ._parse_util import DateDelta
+from ._parse_util import DateValues
 from ._parse_util import date_expressions as defined_date_exprs
 
 
@@ -60,7 +60,7 @@ class DateParser:
     ___________
 
     __init__(current_date: datetime.date | None = None,
-        named_days: dict[str,str] | None = None,) -> None:
+        named_days: dict[str,str] | None = None, allow_past: bool = False) -> None:
         Constructor for creating a new DateParser object.
 
     sub_named_days(text:str) -> str:
@@ -72,10 +72,10 @@ class DateParser:
         Locates expressions in the text that match a known date pattern, and groups
         consecutive expressions together as a DateGroups object.
 
-    parse_date_match(date_match: DateMatch) -> datetime.date | DateDelta
+    parse_date_match(date_match: DateMatch) -> datetime.date | DateValues
         For the given DateMatch object, call its to_date() method and return the result.
         If the DateMatch represents a modifier rather than an absolute date,
-        returns as a DateDelta, otherwise returns a datetime.date
+        returns as a DateValues, otherwise returns a datetime.date
 
 
     parse_tokens(match_iter: Iterable[DateMatch]) -> date:
@@ -106,7 +106,10 @@ class DateParser:
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
 
     def __init__(
-        self, current_date: date | None = None, named_days: dict[str, str] | None = None
+        self,
+        current_date: date | None = None,
+        named_days: dict[str, str] | None = None,
+        allow_past: bool = False,
     ) -> None:
         """
         Constructor for a DateParser.
@@ -118,6 +121,9 @@ class DateParser:
             named_days: dict[str,str] | None = None
                 User-defined named day aliases, which are added to the predefined defaults
                 to form the self.named_days attribute.
+            allow_past: bool = False
+                If true (default), will correct outputted dates to the next valid occurrence
+                after self.current_date, if they would fall before it
         """
 
         self.date_expressions = defined_date_exprs
@@ -125,6 +131,8 @@ class DateParser:
         self.current_date = current_date if current_date is not None else date.today()
 
         self.named_days = self.default_named_days
+
+        self.allow_past = allow_past
 
         if named_days is not None:
             self.named_days.update(named_days)
@@ -148,10 +156,10 @@ class DateParser:
         text = self.sub_named_days(text)
         return DateGroups(text, self.date_expressions)
 
-    def parse_date_match(self, date_match: DateMatch) -> date | DateDelta:
+    def parse_date_match(self, date_match: DateMatch) -> date | DateValues:
         """
         Wrapper to call the to_date() method on the given DateMatch object and return the result
-        Result is either a datetime.date or DateDelta object.
+        Result is either a datetime.date or DateValues object.
         """
         return date_match.to_date(self.current_date)
 
@@ -170,7 +178,7 @@ class DateParser:
             pformat([m.content for m in match_iter]),
         )
 
-        offset: list[DateDelta] = []
+        offset: list[DateValues] = []
         anchor_date: date | None = None
 
         for match in match_iter:
@@ -199,7 +207,7 @@ class DateParser:
         total_offsets = {"day": 0, "month": 0, "year": 0}
 
         for delta in offset:
-            for interval, count in vars(delta).items():
+            for interval, count in delta.__dict__().items():
                 if not interval in total_offsets:
                     continue
                 total_offsets[interval] += count
@@ -212,7 +220,7 @@ class DateParser:
             "year": anchor_date.year + total_offsets["year"],
         }
 
-        date_vals = DateDelta(srcdict=date_vals_dict)
+        date_vals = DateValues(srcdict=date_vals_dict)
 
         # If the new sum of months is less than 1 or greater than 12,
         # allow for wrapping into the previous or next year
@@ -234,7 +242,7 @@ class DateParser:
 
         parsed_date = date(**date_vals.__dict__())
 
-        if parsed_date < self.current_date:
+        if parsed_date < self.current_date and not self.allow_past:
             parsed_date = parsed_date.replace(year=self.current_date.year + 1)
 
         return parsed_date

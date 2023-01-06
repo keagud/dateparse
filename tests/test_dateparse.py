@@ -1,7 +1,6 @@
 import pytest, yaml, datetime
 
 from dateparse import DateParser
-#TODO named dates are sometimes not interacting with modifiers properly
 
 with open("tests/testing_setup.yaml", "r") as infile:
     test_data = yaml.full_load(infile)

@@ -7,4 +7,5 @@ poetry.lock
 *.lock
 _local/
 _localtest.py
+dist/
 
