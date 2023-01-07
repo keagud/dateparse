@@ -58,12 +58,15 @@ def iter_to_regex(input_list: Iterable) -> str:
     return "|".join([str(s) for s in input_list if s])
 
 
+QUICK_DAY_NAMES = ["today", "tomorrow", "yesterday"]
+
 WHITESPACE_BUF = r"(?:\s*)"
 # make regex pattern strings
 MONTHS_MATCH_REGEX = iter_to_regex(MONTH_SHORTNAMES)
 WEEKDAY_MATCH_REGEX = iter_to_regex(WEEKDAY_SHORTNAMES)
 TIME_INTERVAL_REGEX = iter_to_regex(TIME_INTERVAL_TYPES)
 NUMBER_WORDS_REGEX = iter_to_regex(NUMBER_WORDS)
+QUICK_DAYS_REGEX = iter_to_regex(QUICK_DAY_NAMES)
 
 INTERVAL_PREPOSITION_REGEX = (
     iter_to_regex(POSITIVE_INTERVAL_WORDS)
@@ -111,4 +114,8 @@ RELATIVE_WEEKDAY_PATTERN = compile_pattern(
     + WEEKDAY_MATCH_REGEX
     + ")"
     + WHITESPACE_BUF
+)
+
+QUICK_DAYS_PATTERN = compile_pattern(
+    WHITESPACE_BUF + "r(?P<quick_dayname>" + QUICK_DAYS_REGEX + ")" + WHITESPACE_BUF
 )

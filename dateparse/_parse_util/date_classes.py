@@ -24,6 +24,7 @@ from .regex_utils import MDY_DATE_PATTERN
 from .regex_utils import IN_N_INTERVALS_PATTERN
 from .regex_utils import RELATIVE_WEEKDAY_PATTERN
 from .regex_utils import RELATIVE_INTERVAL_PATTERN
+from .regex_utils import QUICK_DAYS_PATTERN
 
 from .regex_utils import NUMBER_WORDS
 
@@ -182,7 +183,12 @@ class DateGroups:
 
 def match_to_dict(obj: DateMatch | dict[str, str]) -> dict[str, str]:
     if isinstance(obj, DateMatch):
-        return obj.match_groups
+        return {
+            k: v.lower().strip()
+            for k, v in obj.match_groups.items()
+            if k is not None and v is not None
+        }
+
     return obj
 
 
@@ -218,7 +224,7 @@ def mdy_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> date:
 
     day = int(day_str)
 
-    year = int(date_match["year"]) if date_match["year"] else base_date.year
+    year = int(date_match["year"]) if 'year' in date_match else base_date.year
 
     return date(year, month, day)
 
@@ -240,7 +246,7 @@ def relative_weekday_parse(
 ) -> date:
     date_match = match_to_dict(date_match)
 
-    specifier = date_match["specifier"]
+    specifier = date_match.get('specifier', '')
     weekday_str = date_match["weekday_name"]
 
     weekday_num: int = WEEKDAY_SHORTNAMES.index(weekday_str)
@@ -261,11 +267,7 @@ def relative_interval_parse(
     date_match: dict[str, str] | DateMatch, _: date
 ) -> DateValues:
 
-    date_match = {
-        k.lower().strip(): v.lower().strip()
-        for k, v in match_to_dict(date_match).items()
-    }
-
+    date_match = match_to_dict(date_match)
     units_count = normalize_number(date_match["time_unit_count"])
     interval_name_str = date_match["time_interval_name"]
     preposition = date_match["preposition"]
@@ -280,6 +282,17 @@ def relative_interval_parse(
     return DateValues(**{interval_name_str: units_count})
 
 
+def quick_day_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> date:
+
+    date_match = match_to_dict(date_match)
+
+    offset = timedelta(
+        days={"today": 0, "tomorrow": 1, "yesterday": -1}[date_match["quick_dayname"]]
+    )
+
+    return base_date + offset
+
+
 date_expressions = (
     AbsoluteDateExpression(pattern=MDY_DATE_PATTERN, parse_func=mdy_parse),
     AbsoluteDateExpression(
@@ -288,6 +301,7 @@ date_expressions = (
     AbsoluteDateExpression(
         pattern=RELATIVE_WEEKDAY_PATTERN, parse_func=relative_weekday_parse
     ),
+    AbsoluteDateExpression(pattern=QUICK_DAYS_PATTERN, parse_func=quick_day_parse),
     DeltaDateExpression(
         pattern=RELATIVE_INTERVAL_PATTERN,
         parse_func=relative_interval_parse,
