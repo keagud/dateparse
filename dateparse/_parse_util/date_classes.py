@@ -28,10 +28,18 @@ from .regex_utils import QUICK_DAYS_PATTERN
 
 from .regex_utils import NUMBER_WORDS
 
-# TODO docstrings for this file
-
 
 class DateValues:
+    """
+    Class to store date parameters in a more flexible (mutible) way than a date object
+
+    day, week, month, and year params can be specified individually to allow an isinstance
+    to express a delta or interval, or a dict of a day month and year (kwargs of a datetime.date
+    constructor) can be passed instead.
+
+    to_dict(self): returns a dict of that same form, can be used as **kwargs for a date object
+    """
+
     def __init__(
         self,
         day: int = 0,
@@ -55,26 +63,48 @@ class DateValues:
         self.month = month
         self.year = year
 
-    def __dict__(self):
+    def to_dict(self):
+        """Returns day, month, and year values in a dict."""
         return {"day": self.day, "month": self.month, "year": self.year}
 
 
 @dataclass(frozen=True, kw_only=True)
 class DateExpression:
+    """
+    Superclass for any kind of date expression
+    parse_func: the function to be called to convert this expression to a date
+    pattern: the original re.Pattern associated with the expression.
+    """
+
     parse_func: Callable
     pattern: Pattern
-    is_absolute: bool = True
 
 
 class AbsoluteDateExpression(DateExpression):
+    """DateExpression subclass for expressions that form an independent date"""
+
     parse_func: Callable[..., date]
 
 
 class DeltaDateExpression(DateExpression):
+    """DateExpression subclass for expressions that act as modifiers to an absolute date"""
+
     parse_func: Callable[..., DateValues]
 
 
 class DateMatch:
+    """
+    Class representing an occurrence of a DateExpression found in the text
+
+    Members:
+        expression: the DateExpression object matched against
+        start_index, end_index: int indices of the start and end of the matched
+            substring within the text
+        content: the substring that was matched
+        base_match: the re.Match object that was originally matched against
+        match_groups: dict of the named groups of base_match
+    """
+
     __slots__ = (
         "expression",
         "start_index",
@@ -118,10 +148,11 @@ class DateGroups:
         self.reversed = reversed
         self.consecutive = consecutive
 
-    def _get_consecutive(self, matches_list: list[DateMatch]) -> list[list[DateMatch]]:
+    def get_consecutive(self, matches_list: list[DateMatch]) -> list[list[DateMatch]]:
         """
         Given a list of DateMatch objects,
         groups them based on the segments that are consecutive within the original string.
+        Returns a list of lists of DateMatch objects.
         """
 
         match_groups: list[list[DateMatch]] = []
@@ -156,6 +187,7 @@ class DateGroups:
         return match_groups
 
     def get_groups(self) -> list[list[DateMatch]]:
+        """Extracts any expressions in self.text that match one of self.expressions"""
 
         all_matches: list[DateMatch] = []
 
@@ -178,7 +210,7 @@ class DateGroups:
 
         all_matches.sort(key=lambda x: x.start_index)
 
-        return self._get_consecutive(all_matches)
+        return self.get_consecutive(all_matches)
 
 
 def match_to_dict(obj: DateMatch | dict[str, str]) -> dict[str, str]:
@@ -193,6 +225,8 @@ def match_to_dict(obj: DateMatch | dict[str, str]) -> dict[str, str]:
 
 
 def normalize_number(number_term: str) -> int:
+
+    """Converts a number word as a string to an int, raises ValueError if not a number"""
 
     number_term = number_term.strip().lower()
 
@@ -211,6 +245,7 @@ def normalize_number(number_term: str) -> int:
 
 
 def mdy_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> date:
+    """Parse function for expressions like "October 10." """
 
     date_match = match_to_dict(date_match)
 
@@ -230,6 +265,7 @@ def mdy_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> date:
 
 
 def n_intervals_parse(date_match: DateMatch | dict[str, str], base_date: date) -> date:
+    """Parse function for expressions like "In ten days." """
 
     date_match = match_to_dict(date_match)
 
@@ -244,6 +280,7 @@ def n_intervals_parse(date_match: DateMatch | dict[str, str], base_date: date) -
 def relative_weekday_parse(
     date_match: DateMatch | dict[str, str], base_date: date
 ) -> date:
+    """Parse function for expressions like "this Wednesday" """
     date_match = match_to_dict(date_match)
 
     specifier = date_match.get("specifier", "")
@@ -267,6 +304,8 @@ def relative_interval_parse(
     date_match: dict[str, str] | DateMatch, _: date
 ) -> DateValues:
 
+    """Parse function for expressions like "Four days after", "a week before" """
+
     date_match = match_to_dict(date_match)
     units_count = normalize_number(date_match.get("time_unit_count", "one"))
     interval_name_str = date_match["time_interval_name"]
@@ -284,17 +323,18 @@ def relative_interval_parse(
 
 def quick_day_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> date:
 
+    """Parse function for "today", "tomorrow", "yesterday" """
+
     date_match = match_to_dict(date_match)
 
     offset = timedelta(
         days={"today": 0, "tomorrow": 1, "yesterday": -1}[date_match["quick_dayname"]]
     )
 
-    print(offset)
-
     return base_date + offset
 
 
+# declare the DateExpression objects and wrap them in a tuple for easy imports and iteration
 date_expressions = (
     AbsoluteDateExpression(pattern=MDY_DATE_PATTERN, parse_func=mdy_parse),
     AbsoluteDateExpression(
@@ -307,6 +347,5 @@ date_expressions = (
     DeltaDateExpression(
         pattern=RELATIVE_INTERVAL_PATTERN,
         parse_func=relative_interval_parse,
-        is_absolute=False,
     ),
 )

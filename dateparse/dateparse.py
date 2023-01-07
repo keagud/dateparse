@@ -3,11 +3,6 @@ Defines the API for the main operations exposed by the Dateparse package,
 via the DateParser class.
 """
 
-__author__ = "keagud"
-__contact__ = "keagud@protonmail.com"
-__license__ = "GPL 3.0 or later"
-
-
 from datetime import date
 from pprint import pformat
 from typing import Iterable
@@ -124,7 +119,6 @@ class DateParser:
 
         self.date_expressions = defined_date_exprs
 
-
         self.current_date = current_date if current_date is not None else date.today()
 
         self.named_days = self.default_named_days
@@ -204,20 +198,19 @@ class DateParser:
         total_offsets = {"day": 0, "month": 0, "year": 0}
 
         for delta in offset:
-            for interval, count in delta.__dict__().items():
+            for interval, count in delta.to_dict().items():
                 if not interval in total_offsets:
                     continue
                 total_offsets[interval] += count
 
         # add the delta sum to anchor for the final result
-
-        date_vals_dict = {
-            "day": anchor_date.day + total_offsets["day"],
-            "month": anchor_date.month + total_offsets["month"],
-            "year": anchor_date.year + total_offsets["year"],
-        }
-
-        date_vals = DateValues(srcdict=date_vals_dict)
+        date_vals = DateValues(
+            srcdict={
+                "day": anchor_date.day + total_offsets["day"],
+                "month": anchor_date.month + total_offsets["month"],
+                "year": anchor_date.year + total_offsets["year"],
+            }
+        )
 
         # If the new sum of months is less than 1 or greater than 12,
         # allow for wrapping into the previous or next year
@@ -237,7 +230,7 @@ class DateParser:
             date_vals.month += date_vals.day // maxdays
             date_vals.day = date_vals.day % maxdays
 
-        parsed_date = date(**date_vals.__dict__())
+        parsed_date = date(**date_vals.to_dict())
 
         if parsed_date < self.current_date and not self.allow_past:
             parsed_date = parsed_date.replace(year=self.current_date.year + 1)
@@ -254,13 +247,15 @@ class DateParser:
         _______
 
             text:str
-                The input text to be scanned through. If no known date format patterns are matched, raises a ValueError
+                The input text to be scanned through.
+                If no known date format patterns are matched, raises a ValueError
 
             iter_backward = False:
                 If set to True, iteration starts at the right and moves leftward (default: False)
 
             max_dates = 0
-                The maximum number of dates to parse before halting. If zero (the default), will continue as long as the string contains matches.
+                The maximum number of dates to parse before halting.
+                If zero (the default), will continue as long as the string contains matches.
         """
 
         groups = self.group_match_tokens(text).get_groups()

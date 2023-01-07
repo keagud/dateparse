@@ -119,4 +119,3 @@ RELATIVE_WEEKDAY_PATTERN = compile_pattern(
 QUICK_DAYS_PATTERN = compile_pattern(
     WHITESPACE_BUF + r"(?P<quick_dayname>" + QUICK_DAYS_REGEX + ")" + WHITESPACE_BUF
 )
-
