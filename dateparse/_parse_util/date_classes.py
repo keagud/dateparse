@@ -224,7 +224,7 @@ def mdy_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> date:
 
     day = int(day_str)
 
-    year = int(date_match["year"]) if 'year' in date_match else base_date.year
+    year = int(date_match["year"]) if "year" in date_match else base_date.year
 
     return date(year, month, day)
 
@@ -246,7 +246,7 @@ def relative_weekday_parse(
 ) -> date:
     date_match = match_to_dict(date_match)
 
-    specifier = date_match.get('specifier', '')
+    specifier = date_match.get("specifier", "")
     weekday_str = date_match["weekday_name"]
 
     weekday_num: int = WEEKDAY_SHORTNAMES.index(weekday_str)
@@ -268,7 +268,7 @@ def relative_interval_parse(
 ) -> DateValues:
 
     date_match = match_to_dict(date_match)
-    units_count = normalize_number(date_match["time_unit_count"])
+    units_count = normalize_number(date_match.get("time_unit_count", "one"))
     interval_name_str = date_match["time_interval_name"]
     preposition = date_match["preposition"]
 
@@ -289,6 +289,8 @@ def quick_day_parse(date_match: dict[str, str] | DateMatch, base_date: date) -> 
     offset = timedelta(
         days={"today": 0, "tomorrow": 1, "yesterday": -1}[date_match["quick_dayname"]]
     )
+
+    print(offset)
 
     return base_date + offset
 

@@ -124,6 +124,7 @@ class DateParser:
 
         self.date_expressions = defined_date_exprs
 
+
         self.current_date = current_date if current_date is not None else date.today()
 
         self.named_days = self.default_named_days
@@ -264,7 +265,7 @@ class DateParser:
 
         groups = self.group_match_tokens(text).get_groups()
 
-        if not groups:
+        if not groups[0]:
             raise ValueError(
                 f"Could not match against any date expression types: {text}"
             )
