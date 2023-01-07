@@ -6,7 +6,6 @@ via the DateParser class.
 __author__ = "keagud"
 __contact__ = "keagud@protonmail.com"
 __license__ = "GPL 3.0 or later"
-__version__ = "0.9"
 
 
 from datetime import date
@@ -15,11 +14,8 @@ from typing import Iterable
 from typing import Iterator
 from calendar import monthrange
 
-
 import sys
-
 import logging
-
 
 from ._parse_util import DateMatch
 from ._parse_util import DateGroups
