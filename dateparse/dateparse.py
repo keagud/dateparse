@@ -8,7 +8,7 @@ from pprint import pformat
 from typing import Iterable
 from typing import Iterator
 from calendar import monthrange
-
+from collections import namedtuple
 import sys
 import logging
 
@@ -21,6 +21,8 @@ from ._parse_util import date_expressions as defined_date_exprs
 
 if len(sys.argv) > 1 and sys.argv[1].lower() == "--debug":
     logging.basicConfig(level=logging.DEBUG)
+
+DateInfoTuple = namedtuple("DateInfoTuple", ["date", "start", "end"])
 
 
 class DateParser:
@@ -237,9 +239,9 @@ class DateParser:
 
         return parsed_date
 
-    def extract_and_parse(
+    def extract_dates_info(
         self, text: str, iter_backward: bool = False, max_dates: int = 0
-    ) -> Iterator[date]:
+    ) -> Iterator[DateInfoTuple]:
         """
         Main wrapper method for extracting date expressions from a string.
         Output: Iterator over datetime.date objects
@@ -269,10 +271,32 @@ class DateParser:
             groups.reverse()
 
         for index, tokens in enumerate(groups, start=1):
-            yield self.parse_tokens(tokens)
+            group_start = min([t.start_index for t in tokens])
+            group_end = max([t.end_index for t in tokens])
+            yield DateInfoTuple(self.parse_tokens(tokens), group_start, group_end)
 
             if 0 < max_dates <= index:
                 break
+
+    def extract_and_parse(
+        self, text: str, iter_backward: bool = False, max_dates: int = 0
+    ) -> Iterator[date]:
+        """Wraps extract_dates_info, taking the same params, but yields only the date."""
+        gen = self.extract_dates_info(
+            text, iter_backward=iter_backward, max_dates=max_dates
+        )
+        for date_info in gen:
+            yield date_info.date
+
+    def get_first_info(self, text: str) -> DateInfoTuple:
+        """Gets full info (date object + start and end indices) for first date in a string"""
+        gen = self.extract_dates_info(text, max_dates=1)
+        return next(gen)
+
+    def get_last_info(self, text: str) -> DateInfoTuple:
+        """Gets full info (date object + start and end indices) for last date in a string"""
+        gen = self.extract_dates_info(text, max_dates=1, iter_backward=True)
+        return next(gen)
 
     def get_first(self, text: str) -> date:
         """Gets the first (leftmost) date in a string"""
