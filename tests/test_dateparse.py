@@ -1,29 +1,32 @@
 import pytest, yaml, datetime
 
 from dateparse import DateParser
+from collections import namedtuple
 
-with open("tests/testing_setup.yaml", "r") as infile:
+
+with open("tests/params.yaml", "r") as infile:
     test_data = yaml.full_load(infile)
-    print("Loaded test values from testing_setup.yaml")
+
 
 @pytest.fixture(params=test_data)
-def make_parser(request):
-    d = request.param
+def make_parser_group(request):
+    test_data_set: dict = request.param
 
-    year:int = d["year"]
-    month:int = d["month"]
-    day: int = d["day"]
+    init_year: int = test_data_set["year"]
+    init_month: int = test_data_set["month"]
+    init_day: int = test_data_set["day"]
 
-    test_date = datetime.date(year,month,day)
-    return DateParser(test_date)
+    init_date = datetime.date(init_year, init_month, init_day)
+    test_parser = DateParser(current_date=init_date)
+
+    test_io_vals: dict = test_data_set["expected_base"]
+    return test_parser, test_io_vals
 
 
+def test_parser(make_parser_group):
+    parser, vals = make_parser_group
 
-def test_parser(make_parser):
+    for input_text, test_date_vals in vals.items():
+        test_date = datetime.date(*test_date_vals)
 
-    tests:dict = test_data[0]["expected_base"]
-
-    for text, vals in tests.items():
-      test_date=   datetime.date(vals[0], vals[1], vals[2])
-
-      assert make_parser.get_first(text) == test_date
+        assert parser.get_last(input_text) == test_date
