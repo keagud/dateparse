@@ -263,10 +263,8 @@ class DateParser:
         groups = self.group_match_tokens(text).get_groups()
 
         if not groups[0]:
-            raise ValueError(
-                f"Could not match against any date expression types: {text}"
-            )
-
+            return None
+            
         if iter_backward:
             groups.reverse()
 
