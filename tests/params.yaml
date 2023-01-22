@@ -1,5 +1,5 @@
-[
 
+[
   {
     label: "dec 17",
     year: 2022,
@@ -7,7 +7,6 @@
     day: 17,
 
     expected_base: {
-
       "January 2" : [2023, 1, 2],
       "A week from tues": [2022, 12, 27],
       "christmas" : [2022, 12, 25],
@@ -23,7 +22,6 @@
       
 
     },
-
     # currently unimplemented, but aspirational
     expected_advanced: {
 
@@ -34,7 +32,7 @@
 
     }
 
-  },
-
+  }
 
 ]
+    

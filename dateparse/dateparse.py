@@ -263,7 +263,7 @@ class DateParser:
         groups = self.group_match_tokens(text).get_groups()
 
         if not groups:
-            return None
+            return (yield None)
 
         if iter_backward:
             groups.reverse()
@@ -289,7 +289,7 @@ class DateParser:
     def get_first_info(self, text: str) -> DateInfoTuple | None:
         """Gets full info (date object + start and end indices) for first date in a string"""
         gen = self.extract_dates_info(text, max_dates=1)
-        return next(gen)
+        return next(gen) 
 
     def get_last_info(self, text: str) -> DateInfoTuple | None:
         """Gets full info (date object + start and end indices) for last date in a string"""

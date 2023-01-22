@@ -110,7 +110,7 @@ IN_N_INTERVALS_PATTERN = compile_pattern(
 # phrases of the form "this sunday", "next wednesday"
 RELATIVE_WEEKDAY_PATTERN = compile_pattern(
     WHITESPACE_BUF
-    + r"(?P<specifier>this|next)?[^\n\d\w]*(?P<weekday_name>"
+    + r"(?P<specifier>this|next|last)?[^\n\d\w]*(?P<weekday_name>"
     + WEEKDAY_MATCH_REGEX
     + ")"
     + WHITESPACE_BUF

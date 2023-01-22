@@ -8,6 +8,11 @@ with open("tests/params.yaml", "r") as infile:
     test_data = yaml.full_load(infile)
 
 
+def make_date(date_params):
+    return datetime.date(*date_params)
+  
+
+
 @pytest.fixture(params=test_data)
 def make_parser_group(request):
     test_data_set: dict = request.param
@@ -30,3 +35,44 @@ def test_parser(make_parser_group):
         test_date = datetime.date(*test_date_vals)
 
         assert parser.get_last(input_text) == test_date
+        assert parser.get_last(input_text) == parser.get_first(input_text)
+
+#TODO multiple expressions fail 
+
+#def test_multiple_expressions(make_parser_group):
+#    parser, vals = make_parser_group
+
+#    inputs = []
+#    expected_dates = []
+
+#    for expr, date_value in vals.items():
+#        inputs.append(expr)
+#        expected_dates.append(make_date(date_value))
+
+#    input_text = " ".join(inputs)
+
+
+#    iter_parser = parser.extract_and_parse(input_text)
+
+#    for i, d in enumerate(iter_parser):
+
+#        assert d == expected_dates[i]
+
+#        print(f"{d} ==  {str(expected_dates[i])}\n")
+        
+
+
+
+    
+
+
+def test_error_handling(make_parser_group):
+    parser, vals = make_parser_group
+
+    bad_inputs = ["foo", "bar", "維基百科", "O! the pelican!", "شكشوكة" ]
+
+    for text in bad_inputs:
+
+        assert parser.get_last(text) == None
+        assert parser.get_first(text) == None
+

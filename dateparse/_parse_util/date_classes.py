@@ -299,6 +299,7 @@ def relative_weekday_parse(
 
     if days_delta < 7 and specifier == "next":
         days_delta += 7
+       #TODO past dates are not accounted for here 
 
     return base_date + timedelta(days=days_delta)
 
