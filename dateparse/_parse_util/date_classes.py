@@ -186,7 +186,7 @@ class DateGroups:
 
         return match_groups
 
-    def get_groups(self) -> list[list[DateMatch]]:
+    def get_groups(self) -> list[list[DateMatch]] | None:
         """Extracts any expressions in self.text that match one of self.expressions"""
 
         all_matches: list[DateMatch] = []
@@ -207,6 +207,9 @@ class DateGroups:
             ]
 
             all_matches.extend(matches)
+
+        if not all_matches:
+            return None
 
         all_matches.sort(key=lambda x: x.start_index)
 

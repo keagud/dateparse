@@ -241,7 +241,7 @@ class DateParser:
 
     def extract_dates_info(
         self, text: str, iter_backward: bool = False, max_dates: int = 0
-    ) -> Iterator[DateInfoTuple]:
+    ) -> Iterator[DateInfoTuple | None]:
         """
         Main wrapper method for extracting date expressions from a string.
         Output: Iterator over datetime.date objects
@@ -262,9 +262,9 @@ class DateParser:
 
         groups = self.group_match_tokens(text).get_groups()
 
-        if not groups[0]:
+        if not groups:
             return None
-            
+
         if iter_backward:
             groups.reverse()
 
@@ -278,30 +278,30 @@ class DateParser:
 
     def extract_and_parse(
         self, text: str, iter_backward: bool = False, max_dates: int = 0
-    ) -> Iterator[date]:
+    ) -> Iterator[date | None]:
         """Wraps extract_dates_info, taking the same params, but yields only the date."""
         gen = self.extract_dates_info(
             text, iter_backward=iter_backward, max_dates=max_dates
         )
         for date_info in gen:
-            yield date_info.date
+            yield date_info.date if date_info else None
 
-    def get_first_info(self, text: str) -> DateInfoTuple:
+    def get_first_info(self, text: str) -> DateInfoTuple | None:
         """Gets full info (date object + start and end indices) for first date in a string"""
         gen = self.extract_dates_info(text, max_dates=1)
         return next(gen)
 
-    def get_last_info(self, text: str) -> DateInfoTuple:
+    def get_last_info(self, text: str) -> DateInfoTuple | None:
         """Gets full info (date object + start and end indices) for last date in a string"""
         gen = self.extract_dates_info(text, max_dates=1, iter_backward=True)
         return next(gen)
 
-    def get_first(self, text: str) -> date:
+    def get_first(self, text: str) -> date | None:
         """Gets the first (leftmost) date in a string"""
         gen = self.extract_and_parse(text, max_dates=1)
         return next(gen)
 
-    def get_last(self, text: str) -> date:
+    def get_last(self, text: str) -> date | None:
         """Gets the last (rightmost) date in a string"""
         gen = self.extract_and_parse(text, max_dates=1, iter_backward=True)
         return next(gen)
