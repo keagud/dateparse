@@ -6,6 +6,7 @@ from re import finditer
 import logging
 from pprint import pformat
 
+from copy import deepcopy
 from typing import Iterable
 from typing import Callable
 
@@ -27,6 +28,8 @@ from .regex_utils import RELATIVE_INTERVAL_PATTERN
 from .regex_utils import QUICK_DAYS_PATTERN
 
 from .regex_utils import NUMBER_WORDS
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class DateValues:
@@ -116,6 +119,8 @@ class DateMatch:
 
     def __init__(self, expression: DateExpression, match_obj: Match) -> None:
 
+        import pdb; pdb.set_trace()
+
         self.expression: DateExpression = expression
         self.start_index: int = match_obj.start()
         self.end_index: int = match_obj.end()
@@ -125,8 +130,7 @@ class DateMatch:
         self.match_groups: dict = match_obj.groupdict()
 
         logging.debug(
-            "Created new DateMatch: \n\tPattern: %s" "\n\tSpan: %d - %d\n\tContent: %s",
-            self.expression.pattern,
+            "Created new DateMatch:" "\n\tSpan: %d - %d\n\tContent: %s",
             self.start_index,
             self.end_index,
             self.content,
@@ -155,40 +159,40 @@ class DateGroups:
         Returns a list of lists of DateMatch objects.
         """
 
-        match_groups: list[list[DateMatch]] = []
-        group: list[DateMatch] = []
-
-        prev: DateMatch | None = None
-        for match in matches_list:
-            if prev is not None:
-                # rule out matches fully contained within other matches
+        def remove_subgroups(ls: list[DateMatch]):
+            for first, second, third in zip(ls[:-1], ls[1:-1], ls[2:]):
                 if (
-                    prev.start_index <= match.start_index
-                    and prev.end_index >= match.end_index
+                    second.start_index >= first.start_index
+                    and second.end_index <= first.end_index
+                ) or (
+                    second.start_index >= third.start_index
+                    and second.end_index <= third.end_index
                 ):
+                    print(f"removing {second}")
+                    ls.remove(second)
 
+            return ls
+
+        def group_consecutive(it:list[DateMatch]):
+            g:list[DateMatch] = []
+            for i in it:
+                if g and g[-1].end_index != i.start_index:
+                    yield g
+                    g = [i]
                     continue
-                start_diff = abs(match.start_index - prev.end_index)
-                end_diff = abs(match.end_index - prev.start_index)
 
-                if start_diff > 1 and end_diff > 1:
-                    match_groups.append(group)
-                    group = []
+                g.append(i)
+            yield g
 
-            group.append(match)
-            prev = match
-        match_groups.append(group)
 
-        logging.debug(
-            "Consecutive grouping: %s",
-            pformat([[d.content for d in s] for s in match_groups]),
-        )
 
-        return match_groups
+            
+
+
+        return   [ l for l in group_consecutive(remove_subgroups(matches_list))]
 
     def get_groups(self) -> list[list[DateMatch]] | None:
         """Extracts any expressions in self.text that match one of self.expressions"""
-
         all_matches: list[DateMatch] = []
 
         match_iterators = (
@@ -299,7 +303,7 @@ def relative_weekday_parse(
 
     if days_delta < 7 and specifier == "next":
         days_delta += 7
-       #TODO past dates are not accounted for here 
+    # TODO past dates are not accounted for here
 
     return base_date + timedelta(days=days_delta)
 

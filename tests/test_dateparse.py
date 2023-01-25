@@ -37,28 +37,28 @@ def test_parser(make_parser_group):
         assert parser.get_last(input_text) == test_date
         assert parser.get_last(input_text) == parser.get_first(input_text)
 
-#TODO multiple expressions fail 
 
-#def test_multiple_expressions(make_parser_group):
-#    parser, vals = make_parser_group
+def test_multiple_expressions(make_parser_group):
+    parser, vals = make_parser_group
 
-#    inputs = []
-#    expected_dates = []
+    inputs = []
+    expected_dates = []
 
-#    for expr, date_value in vals.items():
-#        inputs.append(expr)
-#        expected_dates.append(make_date(date_value))
+    for expr, date_value in vals.items():
+        inputs.append(expr)
+        expected_dates.append(make_date(date_value))
 
-#    input_text = " ".join(inputs)
+    input_text = " ".join(inputs)
 
 
-#    iter_parser = parser.extract_and_parse(input_text)
+    
+    iter_parser = parser.extract_and_parse(input_text)
 
-#    for i, d in enumerate(iter_parser):
+    for inp, outp in zip(expected_dates, iter_parser):
 
-#        assert d == expected_dates[i]
 
-#        print(f"{d} ==  {str(expected_dates[i])}\n")
+        print(f"input: {inp} | output: {outp}")
+        assert inp == outp
         
 
 
