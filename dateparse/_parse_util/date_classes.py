@@ -1,5 +1,5 @@
 """ Definitions for classes representing different types of date expressions and related data """
-from re import Pattern
+from re import Pattern, sub
 from re import Match
 from re import finditer
 
@@ -119,7 +119,9 @@ class DateMatch:
 
     def __init__(self, expression: DateExpression, match_obj: Match) -> None:
 
-        import pdb; pdb.set_trace()
+        import pdb
+
+#        pdb.set_trace()
 
         self.expression: DateExpression = expression
         self.start_index: int = match_obj.start()
@@ -152,6 +154,23 @@ class DateGroups:
         self.reversed = reversed
         self.consecutive = consecutive
 
+    # TODO this is a bad bandaid but the alternative is a total rewrite of this class
+    # ...which i should do
+    def group_deltas(self, matches_list: list[DateMatch])-> list[list[DateMatch]]:
+       
+        #TODO def a more pythonic way to do this
+        groupings = []
+        subgroup = []
+        for token in matches_list:
+            subgroup.append(token)
+            if isinstance(token, AbsoluteDateExpression):
+                groupings.append(subgroup)
+                subgroup = []
+
+        return groupings
+
+
+
     def get_consecutive(self, matches_list: list[DateMatch]) -> list[list[DateMatch]]:
         """
         Given a list of DateMatch objects,
@@ -173,8 +192,8 @@ class DateGroups:
 
             return ls
 
-        def group_consecutive(it:list[DateMatch]):
-            g:list[DateMatch] = []
+        def group_consecutive(it: list[DateMatch]):
+            g: list[DateMatch] = []
             for i in it:
                 if g and g[-1].end_index != i.start_index:
                     yield g
@@ -184,12 +203,11 @@ class DateGroups:
                 g.append(i)
             yield g
 
+        groups = []
+        for l in group_consecutive(remove_subgroups(matches_list)):
+            groups.extend(self.group_deltas(l))
 
-
-            
-
-
-        return   [ l for l in group_consecutive(remove_subgroups(matches_list))]
+        return groups
 
     def get_groups(self) -> list[list[DateMatch]] | None:
         """Extracts any expressions in self.text that match one of self.expressions"""
@@ -214,8 +232,6 @@ class DateGroups:
 
         if not all_matches:
             return None
-
-        all_matches.sort(key=lambda x: x.start_index)
 
         return self.get_consecutive(all_matches)
 
