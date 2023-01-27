@@ -5,7 +5,7 @@ from re import finditer
 from typing import Iterable
 from typing import Callable
 
-from datetime import date
+from datetime import date, time
 from datetime import timedelta
 
 from itertools import chain
@@ -146,9 +146,29 @@ class Changeme(SimpleNamespace):
             lambda a, b: a + make_groups(b), group_consecutive(dates), initial=[]
         )
 
-    def parse_subexpr(date_tuple, DateTuple) -> date | timedelta:  # type: ignore
-        pass
+    def parse_subexpr(self, date_tuple: DateTuple) -> date | timedelta:
+        return self.parse_funcs[date_tuple.pattern](date_tuple.content)
 
-    def reduce_expression(self, expr_elements: list[DateTuple]) -> date:  # type: ignore
+    def reduce_expression_set(self, expr_elements: list[DateTuple]) -> date:
+        """
+        Takes a list of date tuples- any number that correspond to a relative date
+        pattern, and exactly one corresponding to an absolute date pattern.
+        Returns the date object created by summing them.
+        """
 
+        if not isinstance(anchor_date := self.parse_subexpr(expr_elements[-1]), date):
+            raise ValueError
+
+        if len(expr_elements) == 1:
+            return anchor_date
+
+        deltas: list[timedelta] = [
+            parse_result
+            for e in expr_elements[:-1]
+            if isinstance(parse_result := self.parse_subexpr(e), timedelta)
+        ]
+
+        return anchor_date + reduce(lambda a, b: a + b, deltas)
+
+    def iter_dates(self):
         pass
