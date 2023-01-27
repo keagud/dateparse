@@ -10,7 +10,9 @@ from datetime import timedelta
 
 from itertools import chain
 
-from functools import singledispatchmethod
+from functools import reduce, singledispatchmethod
+from functools import singledispatch
+
 from typing import Type
 from typing import NamedTuple
 from types import SimpleNamespace
@@ -97,14 +99,56 @@ class Changeme(SimpleNamespace):
         start_sort: list[Match] = sorted(dates, key=lambda m: m.start())
         return sorted(start_sort, key=lambda m: m.end())
 
-    def group_expressions(self, dates: list[DateTuple]) -> list[list[DateTuple]]:  # type: ignore
+    def group_expressions(self, dates: list[DateTuple]) -> list[list[DateTuple]]:
+        """Group date expressions that are consecutive"""
 
-        dates = self.ordered_matches(dates)
-        
-        
+        def remove_subgroups(dates: list[DateTuple]):
+
+            # remove any matches fully contained within another match
+            for first, second, third in zip(dates[:-1], dates[1:-1], dates[2:]):
+                if (second.start >= first.start and second.end <= first.end) or (
+                    second.start >= third.start and second.end <= third.end
+                ):
+                    dates.remove(second)
+
+            return dates
+
+        # group consecutive matches
+        def group_consecutive(dates: list[DateTuple]):
+            consec_run = []
+            for i in dates:
+                if consec_run and consec_run[-1][1] != i[0]:
+                    yield consec_run
+                    consec_run = [i]
+                    continue
+
+                consec_run.append(i)
+            yield consec_run
+
+        # enforce each group to consist of any number of relative expressions
+        # + exactly one absolute expression
+        def make_groups(dates: list[DateTuple]):
+            groups: list[list[DateTuple]] = []
+            group: list[DateTuple] = []
+            for d in dates:
+                if d.pattern in absolute_patterns:
+                    group.append(d)
+                    groups.append(group)
+                    group = []
+                    continue
+
+                group.append(d)
+            return groups
+
+        dates = remove_subgroups(self.ordered_matches(dates))
+
+        return reduce(
+            lambda a, b: a + make_groups(b), group_consecutive(dates), initial=[]
+        )
 
     def parse_subexpr(date_tuple, DateTuple) -> date | timedelta:  # type: ignore
         pass
 
     def reduce_expression(self, expr_elements: list[DateTuple]) -> date:  # type: ignore
+
         pass
