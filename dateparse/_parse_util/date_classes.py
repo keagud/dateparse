@@ -16,19 +16,20 @@ from functools import singledispatch
 from typing import NamedTuple
 from types import SimpleNamespace
 
-from regex_utils import TIME_INTERVAL_TYPES
-from regex_utils import NEGATIVE_INTERVAL_WORDS
-from regex_utils import WEEKDAY_SHORTNAMES
-from regex_utils import MONTH_SHORTNAMES
+from .regex_utils import TIME_INTERVAL_TYPES
+from .regex_utils import NEGATIVE_INTERVAL_WORDS
+from .regex_utils import WEEKDAY_SHORTNAMES
+from .regex_utils import MONTH_SHORTNAMES
 
-from regex_utils import MDY_DATE_PATTERN
-from regex_utils import IN_N_INTERVALS_PATTERN
-from regex_utils import RELATIVE_WEEKDAY_PATTERN
-from regex_utils import RELATIVE_INTERVAL_PATTERN
-from regex_utils import QUICK_DAYS_PATTERN
+from .regex_utils import MDY_DATE_PATTERN
+from .regex_utils import IN_N_INTERVALS_PATTERN
+from .regex_utils import RELATIVE_WEEKDAY_PATTERN
+from .regex_utils import RELATIVE_INTERVAL_PATTERN
+from .regex_utils import QUICK_DAYS_PATTERN
 
+from .regex_utils import NUMBER_WORDS
 
-from regex_utils import NUMBER_WORDS
+from .parse_functions import DateTuple
 
 
 absolute_patterns = [
@@ -38,13 +39,6 @@ absolute_patterns = [
     QUICK_DAYS_PATTERN,
 ]
 relative_patterns = [RELATIVE_INTERVAL_PATTERN]
-
-
-class DateTuple(NamedTuple):
-    pattern: Pattern
-    content: str
-    start: int
-    end: int
 
 
 def quick_day_parse(date_match: Match, base_date: date) -> date:
@@ -77,6 +71,7 @@ class Changeme(SimpleNamespace):
         return DateTuple(
             pattern=match.re,
             content=match.group(),
+            fields=match.groupdict(),
             start=match.start(),
             end=match.end(),
         )
@@ -173,7 +168,7 @@ class Changeme(SimpleNamespace):
 
         return anchor_date + reduce(lambda a, b: a + b, deltas)
 
-    def iter_dates(self, text: str, from_right: bool = False)-> Iterator[date]:
+    def iter_dates(self, text: str, from_right: bool = False) -> Iterator[date]:
         """Driver function to extract dates from text and iterate through them"""
 
         extracted_dates = [
@@ -185,5 +180,3 @@ class Changeme(SimpleNamespace):
 
         for expr_set in self.group_expressions(extracted_dates):
             yield self.reduce_expression_set(expr_set)
-
-
