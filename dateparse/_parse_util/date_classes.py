@@ -2,7 +2,7 @@ from re import Pattern
 from re import Match
 from re import finditer
 
-from typing import Iterable
+from typing import Iterator
 from typing import Callable
 
 from datetime import date, time
@@ -13,7 +13,6 @@ from itertools import chain
 from functools import reduce, singledispatchmethod
 from functools import singledispatch
 
-from typing import Type
 from typing import NamedTuple
 from types import SimpleNamespace
 
@@ -100,7 +99,10 @@ class Changeme(SimpleNamespace):
         return sorted(start_sort, key=lambda m: m.end())
 
     def group_expressions(self, dates: list[DateTuple]) -> list[list[DateTuple]]:
-        """Group date expressions that are consecutive"""
+        """
+        Group expressions into sublists, representing a string of consecutive expressions of
+        this form: any number of relative expressions followed by exactly one absolute expression.
+        """
 
         def remove_subgroups(dates: list[DateTuple]):
 
@@ -147,6 +149,7 @@ class Changeme(SimpleNamespace):
         )
 
     def parse_subexpr(self, date_tuple: DateTuple) -> date | timedelta:
+        """Converts a date tuple to a date or timedelta, by calling its corresponding function"""
         return self.parse_funcs[date_tuple.pattern](date_tuple.content)
 
     def reduce_expression_set(self, expr_elements: list[DateTuple]) -> date:
@@ -170,5 +173,17 @@ class Changeme(SimpleNamespace):
 
         return anchor_date + reduce(lambda a, b: a + b, deltas)
 
-    def iter_dates(self):
-        pass
+    def iter_dates(self, text: str, from_right: bool = False)-> Iterator[date]:
+        """Driver function to extract dates from text and iterate through them"""
+
+        extracted_dates = [
+            self.match_to_tuple(m) for m in self.extract_regex_matches(text)
+        ]
+
+        if from_right:
+            extracted_dates.reverse()
+
+        for expr_set in self.group_expressions(extracted_dates):
+            yield self.reduce_expression_set(expr_set)
+
+
