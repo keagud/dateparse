@@ -30,6 +30,8 @@ relative_patterns = [RELATIVE_INTERVAL_PATTERN]
 
 
 class DateTuple(NamedTuple):
+    """Container for data about a matched date expression"""
+
     pattern: Pattern
     fields: dict
     content: str
@@ -153,10 +155,14 @@ def months_iter(d: date, forward: bool = True):
         month_year += step
 
 
-def month_delta(d: date, months_count: int, forward: bool = True):
+def month_delta(input_date: date, months_count: int, forward: bool = True):
+    """
+    Get a timedelta for the span months_count after input_date,
+    or before if forward is False.
+    """
     total_days: int = 0
 
-    delta_iter = months_iter(d, forward=forward)
+    delta_iter = months_iter(input_date, forward=forward)
     next(delta_iter)
     for _ in range(months_count):
         total_days += next(delta_iter).days
@@ -167,13 +173,16 @@ def month_delta(d: date, months_count: int, forward: bool = True):
     return timedelta(days=total_days)
 
 
-def year_delta(
-    d: date, years_count: int, forward: bool = True
-) -> timedelta:  # type:ignore
+def year_delta(input_date: date, years_count: int, forward: bool = True) -> timedelta:
+    """
+    Get a timedelta of years_count years after input_date,
+    or before if forward is False.
+    Accounts for leap years.
+    """
 
-    start_year = d.year
-    start_month = d.month
-    start_day = d.day
+    start_year = input_date.year
+    start_month = input_date.month
+    start_day = input_date.day
 
     if not forward:
         years_count *= -1
@@ -187,7 +196,7 @@ def year_delta(
 
     end_date = date(year=end_year, month=start_month, day=start_day)
 
-    return end_date - d
+    return end_date - input_date
 
 
 def relative_interval_parse(date_tuple: DateTuple, base_date: date) -> timedelta:
