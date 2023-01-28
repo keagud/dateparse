@@ -1,20 +1,22 @@
-
 """
 Defines the API for the main operations exposed by the Dateparse package,
 via the DateParser class.
 """
 
 from datetime import date
-from pprint import pformat
-from typing import Iterable
 from typing import Iterator
-from calendar import monthrange
-
+from typing import NamedTuple
 
 from parser.parse_functions import absolute_functions_index
 from parser.parse_functions import relative_functions_index
 
 from parser.date_processor import DateProcessor
+
+
+class DateResult(NamedTuple):
+    date: date
+    start: int
+    end: int
 
 
 class DateParser:
@@ -53,41 +55,72 @@ class DateParser:
         (both passed in at init time or included from the defaults list)
         with its corresponding replacement string.
 
-    group_match_tokens(text:str) -> DateGroups:
-        Locates expressions in the text that match a known date pattern, and groups
-        consecutive expressions together as a DateGroups object.
-
-    parse_date_match(date_match: DateMatch) -> datetime.date | DateValues
-        For the given DateMatch object, call its to_date() method and return the result.
-        If the DateMatch represents a modifier rather than an absolute date,
-        returns as a DateValues, otherwise returns a datetime.date
-
-
-    parse_tokens(match_iter: Iterable[DateMatch]) -> date:
-        Returns the date created from the summation of DateMatch objects referring to
-        DeltaDateExpressions, (e.g. 'a week from') from the match_iter iterable, until an
-        AbsoluteDateExpression (an expression than can unambiguously be converted to a date,
-        potentially using the current date as a reference) is encountered.
-
-        In practice, this means parse_tokens will take an iterable like:
-            ['a week from', 'the day after', 'Tuesday', 'foo']
-        and combine the contents up to and including 'Tuesday',
-        which it returns as a datetime.date
-
-    extract_and_parse(text: str, iter_backward: bool = False, max_dates: int = 0 ) -> Iterator[date]:
+    iter_dates(text: str, iter_backward: bool = False) -> Iterator[date]:
         The main general-purpose parse method. Takes a text string, and yields
-        datetime.date objects for each matched date expression from left to right, or
-        right to left if iter_backward is set to True. If max_dates is specified and nonzero,
-        only yields at most that many dates before halting.
+        date objects for each matched date expression from left to right, or
+        right to left if iter_backward is set to True.
 
-    get_first(text:str) , get_last(text:str)->datetime.date
-        Wrappers for extract_and_parse to get only the
+    get_first(text:str) , get_last(text:str)->date
+        Wrappers for iter_dates to get only the
         leftmost or rightmost expression, respectively
 
-
+    iter_dates_span(text:str) -> Iterator[tuple[date, int, int]]
+    get_first_span, get_last_span -> tuple[date, int, int]
+        These all take the same parameters as iter_dates, get_first and get_last, respectively.
+        The only difference is that the span of the matched expression within the input text is
+        returned as well. The returned date object is a NamedTuple with fields (date, start, end)
+        accessible by direct reference or unpacking
 
     """
 
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
 
-    pass
+    def __init__(
+        self,
+        current_date: date | None = None,
+        named_days: dict[str, str] | None = None,
+        allow_past: bool = False,
+    ) -> None:
+
+        self.current_date = current_date if current_date is not None else date.today()
+
+        self.named_days = self.default_named_days
+
+        self.allow_past = allow_past
+
+        if named_days is not None:
+            self.named_days.update(named_days)
+
+    def sub_named_days(self, text: str):
+
+        """
+        Substitutes all substrings in the input for their corresponding value in self.named_days.
+        Returns the processed string.
+        """
+        text = text.lower()
+
+        for day_name, repl_str in self.named_days.items():
+            if day_name in text:
+                text = text.replace(day_name, repl_str)
+        return text
+
+    def iter_dates(
+        self, text: str, iter_backward: bool = False
+    ) -> Iterator[date | None]:  # type:ignore
+
+    def get_first(self, text: str) -> date | None:  # type: ignore
+        pass
+
+    def get_last(self, text: str) -> date | None:  # type: ignore
+        pass
+
+    def iter_dates_span(
+        self, text: str, iter_backward: bool = False
+    ) -> Iterator[date | None]:  # type:ignore
+        pass
+
+    def get_first_span(self, text: str) -> date | None:  # type: ignore
+        pass
+
+    def get_last_span(self, text: str) -> date | None:  # type: ignore
+        pass

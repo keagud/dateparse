@@ -24,7 +24,6 @@ from .parse_functions import relative_functions_index
 
 class DateProcessor(SimpleNamespace):
 
-    
     parse_funcs: dict[Pattern, Callable] = (
         absolute_functions_index | relative_functions_index
     )
@@ -123,19 +122,19 @@ class DateProcessor(SimpleNamespace):
         )
 
     @classmethod
-    def parse_subexpr(cls, date_tuple: DateTuple) -> date | timedelta:
+    def parse_subexpr(cls, date_tuple: DateTuple, base_date: date) -> date | timedelta:
         """Converts a date tuple to a date or timedelta, by calling its corresponding function"""
-        return cls.parse_funcs[date_tuple.pattern](date_tuple.content)
+        return cls.parse_funcs[date_tuple.pattern](date_tuple, base_date)
 
     @classmethod
-    def reduce_expression_set(cls, expr_elements: list[DateTuple]) -> date:
+    def reduce_expression_set(cls, expr_elements: list[DateTuple], base_date: date) -> date:
         """
         Takes a list of date tuples- any number that correspond to a relative date
         pattern, and exactly one corresponding to an absolute date pattern.
         Returns the date object created by summing them.
         """
 
-        if not isinstance(anchor_date := cls.parse_subexpr(expr_elements[-1]), date):
+        if not isinstance(anchor_date := cls.parse_subexpr(expr_elements[-1], base_date), date):
             raise ValueError
 
         if len(expr_elements) == 1:
@@ -144,13 +143,13 @@ class DateProcessor(SimpleNamespace):
         deltas: list[timedelta] = [
             parse_result
             for e in expr_elements[:-1]
-            if isinstance(parse_result := cls.parse_subexpr(e), timedelta)
+            if isinstance(parse_result := cls.parse_subexpr(e, base_date), timedelta)
         ]
 
         return anchor_date + reduce(lambda a, b: a + b, deltas)
 
     @classmethod
-    def iter_dates(cls, text: str, from_right: bool = False) -> Iterator[date]:
+    def iter_dates(cls, text: str, base_date: date, from_right: bool = False) -> Iterator[date]:
         """Driver function to extract dates from text and iterate through them"""
 
         extracted_dates = [
@@ -161,4 +160,4 @@ class DateProcessor(SimpleNamespace):
             extracted_dates.reverse()
 
         for expr_set in cls.group_expressions(extracted_dates):
-            yield cls.reduce_expression_set(expr_set)
+            yield cls.reduce_expression_set(expr_set, base_date)
