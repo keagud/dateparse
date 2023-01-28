@@ -24,20 +24,23 @@ from .parse_functions import relative_functions_index
 
 class DateProcessor(SimpleNamespace):
 
+    
     parse_funcs: dict[Pattern, Callable] = (
         absolute_functions_index | relative_functions_index
     )
 
-    def extract_regex_matches(self, text: str) -> list[Match]:
+    @classmethod
+    def extract_regex_matches(cls, text: str) -> list[Match]:
 
         return list(
             chain.from_iterable(
-                (finditer(pattern, text) for pattern in self.parse_funcs)
+                (finditer(pattern, text) for pattern in cls.parse_funcs)
             )
         )
 
-    def match_to_tuple(self, match: Match) -> DateTuple:
-        if not match.re in self.parse_funcs:
+    @classmethod
+    def match_to_tuple(cls, match: Match) -> DateTuple:
+        if not match.re in cls.parse_funcs:
             raise ValueError("Match cannot be converted: not a known pattern")
 
         return DateTuple(
@@ -49,23 +52,27 @@ class DateProcessor(SimpleNamespace):
         )
 
     @singledispatchmethod
-    def ordered_matches(self, *args, **kwargs):
+    @classmethod
+    def ordered_matches(cls, *args, **kwargs):
         raise NotImplementedError
 
     @ordered_matches.register
-    def _(self, dates: list[DateTuple]) -> list[DateTuple]:
+    @classmethod
+    def _(cls, dates: list[DateTuple]) -> list[DateTuple]:
         """Sort DateTuple objects by order of occurance in the original string."""
 
         start_sort = sorted(dates, key=lambda d: d.start)
         return sorted(start_sort, key=lambda d: d.end)
 
     @ordered_matches.register
-    def _(self, dates: list[Match]) -> list[Match]:
+    @classmethod
+    def _(cls, dates: list[Match]) -> list[Match]:
         """Sort regex match objects by order of occurance in the original string."""
         start_sort: list[Match] = sorted(dates, key=lambda m: m.start())
         return sorted(start_sort, key=lambda m: m.end())
 
-    def group_expressions(self, dates: list[DateTuple]) -> list[list[DateTuple]]:
+    @classmethod
+    def group_expressions(cls, dates: list[DateTuple]) -> list[list[DateTuple]]:
         """
         Group expressions into sublists, representing a string of consecutive expressions of
         this form: any number of relative expressions followed by exactly one absolute expression.
@@ -109,24 +116,26 @@ class DateProcessor(SimpleNamespace):
                 group.append(d)
             return groups
 
-        dates = remove_subgroups(self.ordered_matches(dates))
+        dates = remove_subgroups(cls.ordered_matches(dates))
 
         return reduce(
             lambda a, b: a + make_groups(b), group_consecutive(dates), initial=[]
         )
 
-    def parse_subexpr(self, date_tuple: DateTuple) -> date | timedelta:
+    @classmethod
+    def parse_subexpr(cls, date_tuple: DateTuple) -> date | timedelta:
         """Converts a date tuple to a date or timedelta, by calling its corresponding function"""
-        return self.parse_funcs[date_tuple.pattern](date_tuple.content)
+        return cls.parse_funcs[date_tuple.pattern](date_tuple.content)
 
-    def reduce_expression_set(self, expr_elements: list[DateTuple]) -> date:
+    @classmethod
+    def reduce_expression_set(cls, expr_elements: list[DateTuple]) -> date:
         """
         Takes a list of date tuples- any number that correspond to a relative date
         pattern, and exactly one corresponding to an absolute date pattern.
         Returns the date object created by summing them.
         """
 
-        if not isinstance(anchor_date := self.parse_subexpr(expr_elements[-1]), date):
+        if not isinstance(anchor_date := cls.parse_subexpr(expr_elements[-1]), date):
             raise ValueError
 
         if len(expr_elements) == 1:
@@ -135,20 +144,21 @@ class DateProcessor(SimpleNamespace):
         deltas: list[timedelta] = [
             parse_result
             for e in expr_elements[:-1]
-            if isinstance(parse_result := self.parse_subexpr(e), timedelta)
+            if isinstance(parse_result := cls.parse_subexpr(e), timedelta)
         ]
 
         return anchor_date + reduce(lambda a, b: a + b, deltas)
 
-    def iter_dates(self, text: str, from_right: bool = False) -> Iterator[date]:
+    @classmethod
+    def iter_dates(cls, text: str, from_right: bool = False) -> Iterator[date]:
         """Driver function to extract dates from text and iterate through them"""
 
         extracted_dates = [
-            self.match_to_tuple(m) for m in self.extract_regex_matches(text)
+            cls.match_to_tuple(m) for m in cls.extract_regex_matches(text)
         ]
 
         if from_right:
             extracted_dates.reverse()
 
-        for expr_set in self.group_expressions(extracted_dates):
-            yield self.reduce_expression_set(expr_set)
+        for expr_set in cls.group_expressions(extracted_dates):
+            yield cls.reduce_expression_set(expr_set)
