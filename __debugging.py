@@ -1,9 +1,20 @@
 
 from dateparse import DateParser
-import yaml
 import datetime
+from datetime import date
 
 
+parser = DateParser(date.today())
+
+#' a week from ' is getting dropped!
+items = ["today", "tomorrow", "this friday", "a week from thursday"]
+
+for i in items:
+    print(parser.get_first(i))
+
+
+
+exit()
 def make_date(date_params):
     return datetime.date(*date_params)
   
@@ -22,31 +33,5 @@ init_date = datetime.date(init_year, init_month, init_day)
 parser = DateParser(current_date=init_date)
 
 vals: dict = test_data_set["expected_base"]
-
-
-
-inputs = []
-expected_dates = []
-
-for expr, date_value in vals.items():
-    inputs.append(expr)
-    expected_dates.append(make_date(date_value))
-
-input_text = " ".join(inputs)
-
-
-
-iter_parser = parser.extract_and_parse(input_text)
-
-c = 0
-for expected, received in zip(inputs, iter_parser):
-    c += 1
-
-    print(f"\nexpected: {expected} | got: {received}\n")
-    import pdb; pdb.set_trace()
-
-print(f"{len(inputs)} expressions expected, got {c}")
-
-
 
 

@@ -52,7 +52,7 @@ def test_multiple_expressions(make_parser_group):
 
 
     
-    iter_parser = parser.extract_and_parse(input_text)
+    iter_parser = parser.iter_dates(input_text)
 
     for inp, outp in zip(expected_dates, iter_parser):
 

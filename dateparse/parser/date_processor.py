@@ -5,6 +5,7 @@ from re import finditer
 from typing import Iterator
 from typing import Callable
 from typing import NamedTuple
+from typing import overload
 
 from datetime import date, time
 from datetime import timedelta
@@ -57,25 +58,10 @@ class DateProcessor(SimpleNamespace):
             end=match.end(),
         )
 
-    @singledispatchmethod
     @classmethod
-    def ordered_matches(cls, *args, **kwargs):
-        raise NotImplementedError
-
-    @ordered_matches.register
-    @classmethod
-    def _(cls, dates: list[DateTuple]) -> list[DateTuple]:
-        """Sort DateTuple objects by order of occurance in the original string."""
-
+    def ordered_matches(cls, dates: list[DateTuple]) -> list[DateTuple]:
         start_sort = sorted(dates, key=lambda d: d.start)
         return sorted(start_sort, key=lambda d: d.end)
-
-    @ordered_matches.register
-    @classmethod
-    def _(cls, dates: list[Match]) -> list[Match]:
-        """Sort regex match objects by order of occurance in the original string."""
-        start_sort: list[Match] = sorted(dates, key=lambda m: m.start())
-        return sorted(start_sort, key=lambda m: m.end())
 
     @classmethod
     def group_expressions(cls, dates: list[DateTuple]) -> list[list[DateTuple]]:
@@ -125,12 +111,13 @@ class DateProcessor(SimpleNamespace):
         dates = remove_subgroups(cls.ordered_matches(dates))
 
         return reduce(
-            lambda a, b: a + make_groups(b), group_consecutive(dates), initial=[]
+            lambda a, b: a + make_groups(b), group_consecutive(dates), []
         )
 
     @classmethod
     def parse_subexpr(cls, date_tuple: DateTuple, base_date: date) -> date | timedelta:
         """Converts a date tuple to a date or timedelta, by calling its corresponding function"""
+        import pdb; pdb.set_trace()
         return cls.parse_funcs[date_tuple.pattern](date_tuple, base_date)
 
     @classmethod

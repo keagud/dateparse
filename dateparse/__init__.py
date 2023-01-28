@@ -13,7 +13,7 @@ DateProcessor:
 """
 
 from .dateparser import DateParser
-from parser.date_processor import DateProcessor
+from .parser.date_processor import DateProcessor
 
 __author__ = "keagud"
 __contact__ = "keagud@protonmail.com"

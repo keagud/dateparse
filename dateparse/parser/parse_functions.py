@@ -1,4 +1,5 @@
 from typing import Callable, NamedTuple
+from typing import Any
 from re import Pattern, Match
 from datetime import date, timedelta
 from calendar import monthrange
@@ -62,7 +63,7 @@ def normalize_number(number_term: str) -> int:
 def mdy_parse(date_tuple: DateTuple, base_date: date) -> date:
     """Parse function for expressions like "October 10." """
 
-    date_fields = date_tuple.fields
+    date_fields:dict [str, Any] = date_tuple.fields
 
     month_str: str = date_fields["month"]
     day_str: str = date_fields["day"]

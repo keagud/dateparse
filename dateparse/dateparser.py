@@ -8,8 +8,8 @@ from typing import Iterator
 from typing import NamedTuple
 
 
-from parser.date_processor import DateProcessor
-from parser.date_processor import DateResult
+from .parser.date_processor import DateProcessor
+from .parser.date_processor import DateResult
 
 
 class DateParser:
