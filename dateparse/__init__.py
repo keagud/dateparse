@@ -4,13 +4,16 @@ No dependencies outside the standard library!
 
 DateParser:
     The main public API for the library.
-    Exposes methods for converting natural language time expressions into datetime.date objects
+    Exposes methods for converting natural language time expressions into datetime.date objects.
+    A stateful wrapper around DateProcessor that retains the given baseline date and other user 
+    preferences.
 
-DateGroups:
-    Exposes methods for grouping date tokens that combine into a single expression.
+DateProcessor:
+    A grouping of utility functions for parsing dates. Lacks persistant state
 """
 
-from .dateparse import DateParser, DateGroups
+from .dateparser import DateParser
+from parser.date_processor import DateProcessor
 
 __author__ = "keagud"
 __contact__ = "keagud@protonmail.com"
