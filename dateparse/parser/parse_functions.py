@@ -2,6 +2,7 @@ from typing import Callable, NamedTuple
 from re import Pattern, Match
 from datetime import date, timedelta
 from calendar import monthrange
+from calendar import isleap
 from itertools import repeat
 import datetime
 
@@ -169,7 +170,24 @@ def month_delta(d: date, months_count: int, forward: bool = True):
 def year_delta(
     d: date, years_count: int, forward: bool = True
 ) -> timedelta:  # type:ignore
-    pass
+
+    start_year = d.year
+    start_month = d.month
+    start_day = d.day
+
+    if not forward:
+        years_count *= -1
+
+    end_year = start_year + years_count
+
+    # look before you leap!
+    if start_month == 2 and start_day == 29:
+        if not isleap(end_year):
+            start_day -= 1
+
+    end_date = date(year=end_year, month=start_month, day=start_day)
+
+    return end_date - d
 
 
 def relative_interval_parse(date_tuple: DateTuple, base_date: date) -> timedelta:
