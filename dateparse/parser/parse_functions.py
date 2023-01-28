@@ -1,8 +1,9 @@
 from typing import Callable, NamedTuple
 from re import Pattern, Match
 from datetime import date, timedelta
-
-from abc import ABCMeta
+from calendar import monthrange
+from itertools import repeat
+import datetime
 
 from .regex_utils import TIME_INTERVAL_TYPES
 from .regex_utils import NEGATIVE_INTERVAL_WORDS
@@ -109,29 +110,6 @@ def relative_weekday_parse(date_tuple: DateTuple, base_date: date) -> date:
     return base_date + timedelta(days=days_delta)
 
 
-# TODO
-def relative_interval_parse(
-    date_tuple: DateTuple, base_date: date
-) -> timedelta:  # type: ignore
-
-    """Parse function for expressions like "Four days after", "a week before" """
-
-    date_fields = date_tuple.fields
-    units_count = normalize_number(date_fields.get("time_unit_count", "one"))
-    interval_name_str = date_fields["time_interval_name"]
-    preposition = date_fields["preposition"]
-
-    if preposition in NEGATIVE_INTERVAL_WORDS:
-        units_count *= -1
-
-    if interval_name_str == "week":
-        interval_name_str = "day"
-        units_count *= 7
-
-    # TODO
-    # return DateValues(**{interval_name_str: units_count})
-
-
 def quick_day_parse(date_tuple: DateTuple, base_date: date) -> date:
 
     """Parse function for "today", "tomorrow", "yesterday" """
@@ -142,6 +120,83 @@ def quick_day_parse(date_tuple: DateTuple, base_date: date) -> date:
     )
 
     return base_date + offset
+
+
+def months_iter(d: date, forward: bool = True):
+    class MonthInfo(NamedTuple):
+        days: int
+        month_num: int
+        year: int
+
+    start_month = d.month
+    start_year = d.year
+
+    month_range_start = 1 if forward else 12
+    month_range_end = 13 if forward else 0
+    step = 1 if forward else -1
+
+    def pack_month_info(y: int, m: int):
+        _, month_days = monthrange(y, m)
+        return MonthInfo(month_days, m, y)
+
+    for m, y in zip(range(start_month, month_range_end, step), repeat(start_year)):
+        yield pack_month_info(y, m)
+
+    month_year = start_year + step
+    while datetime.MINYEAR < month_year < datetime.MAXYEAR:
+        for m, y in zip(
+            range(month_range_start, month_range_end, step), repeat(month_year)
+        ):
+            yield pack_month_info(y, m)
+
+        month_year += step
+
+
+def month_delta(d: date, months_count: int, forward: bool = True):
+    total_days: int = 0
+
+    delta_iter = months_iter(d, forward=forward)
+    next(delta_iter)
+    for _ in range(months_count):
+        total_days += next(delta_iter).days
+
+    if not forward:
+        total_days *= -1
+
+    return timedelta(days=total_days)
+
+
+def year_delta(
+    d: date, years_count: int, forward: bool = True
+) -> timedelta:  # type:ignore
+    pass
+
+
+def relative_interval_parse(date_tuple: DateTuple, base_date: date) -> timedelta:
+
+    """Parse function for expressions like "Four days after", "a week before" """
+
+    date_fields = date_tuple.fields
+    units_count = normalize_number(date_fields.get("time_unit_count", "one"))
+    interval_name_str = date_fields["time_interval_name"]
+    preposition = date_fields["preposition"]
+
+    negative_interval = preposition in NEGATIVE_INTERVAL_WORDS
+
+    if interval_name_str == "month":
+        return month_delta(base_date, units_count, forward=negative_interval)
+
+    if interval_name_str == "year":
+        return year_delta(base_date, units_count, forward=negative_interval)
+
+    if interval_name_str == "week":
+        interval_name_str = "day"
+        units_count *= 7
+
+    if negative_interval:
+        units_count *= -1
+
+    return timedelta(days=units_count)
 
 
 absolute_functions_index: dict[Pattern, Callable[[DateTuple, date], date]] = {
