@@ -11,50 +11,22 @@ from datetime import timedelta
 from itertools import chain
 
 from functools import reduce, singledispatchmethod
-from functools import singledispatch
 
-from typing import NamedTuple
 from types import SimpleNamespace
 
-from .regex_utils import TIME_INTERVAL_TYPES
-from .regex_utils import NEGATIVE_INTERVAL_WORDS
-from .regex_utils import WEEKDAY_SHORTNAMES
-from .regex_utils import MONTH_SHORTNAMES
-
-from .regex_utils import MDY_DATE_PATTERN
-from .regex_utils import IN_N_INTERVALS_PATTERN
-from .regex_utils import RELATIVE_WEEKDAY_PATTERN
-from .regex_utils import RELATIVE_INTERVAL_PATTERN
-from .regex_utils import QUICK_DAYS_PATTERN
-
-from .regex_utils import NUMBER_WORDS
+from .parse_functions import absolute_patterns
+from .parse_functions import relative_patterns
 
 from .parse_functions import DateTuple
+from .parse_functions import absolute_functions_index
+from .parse_functions import relative_functions_index
 
 
-absolute_patterns = [
-    MDY_DATE_PATTERN,
-    IN_N_INTERVALS_PATTERN,
-    RELATIVE_WEEKDAY_PATTERN,
-    QUICK_DAYS_PATTERN,
-]
-relative_patterns = [RELATIVE_INTERVAL_PATTERN]
+class DateProcessor(SimpleNamespace):
 
-
-def quick_day_parse(date_match: Match, base_date: date) -> date:
-
-    """Parse function for "today", "tomorrow", "yesterday" """
-
-    offset = timedelta(
-        days={"today": 0, "tomorrow": 1, "yesterday": -1}[date_match["quick_dayname"]]
+    parse_funcs: dict[Pattern, Callable] = (
+        absolute_functions_index | relative_functions_index
     )
-
-    return base_date + offset
-
-
-class Changeme(SimpleNamespace):
-
-    parse_funcs: dict[Pattern, Callable]
 
     def extract_regex_matches(self, text: str) -> list[Match]:
 

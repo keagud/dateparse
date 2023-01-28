@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import Callable, NamedTuple
 from re import Pattern, Match
 from datetime import date, timedelta
 
@@ -18,19 +18,21 @@ from .regex_utils import QUICK_DAYS_PATTERN
 from .regex_utils import NUMBER_WORDS
 
 
+absolute_patterns = [
+    MDY_DATE_PATTERN,
+    IN_N_INTERVALS_PATTERN,
+    RELATIVE_WEEKDAY_PATTERN,
+    QUICK_DAYS_PATTERN,
+]
+relative_patterns = [RELATIVE_INTERVAL_PATTERN]
+
+
 class DateTuple(NamedTuple):
     pattern: Pattern
     fields: dict
     content: str
     start: int
     end: int
-
-
-class ParseFunction(metaclass=ABCMeta):
-    @classmethod
-    def __subclasshook__(cls):
-
-        pass
 
 
 def normalize_number(number_term: str) -> int:
@@ -73,7 +75,7 @@ def mdy_parse(date_tuple: DateTuple, base_date: date) -> date:
     return date(year, month, day)
 
 
-def n_intervals_parse_delta(date_tuple: DateTuple, base_date: date) -> date:
+def n_intervals_parse(date_tuple: DateTuple, base_date: date) -> date:
     """Parse function for expressions like "In ten days." """
 
     date_fields = date_tuple.fields
@@ -97,7 +99,6 @@ def relative_weekday_parse(date_tuple: DateTuple, base_date: date) -> date:
 
     days_delta = weekday_num - base_date.isoweekday()
 
-    # if
     if days_delta <= 0:
         days_delta += 7
 
@@ -141,3 +142,13 @@ def quick_day_parse(date_tuple: DateTuple, base_date: date) -> date:
     )
 
     return base_date + offset
+
+
+absolute_functions_index: dict[Pattern, Callable[[DateTuple, date], date]] = {
+    MDY_DATE_PATTERN: mdy_parse,
+    IN_N_INTERVALS_PATTERN: n_intervals_parse,
+    RELATIVE_WEEKDAY_PATTERN: relative_weekday_parse,
+    QUICK_DAYS_PATTERN: quick_day_parse,
+}
+
+relative_functions_index = {RELATIVE_INTERVAL_PATTERN: relative_interval_parse}
