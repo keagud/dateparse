@@ -1,9 +1,10 @@
-from re import Pattern
+from re import S, Pattern
 from re import Match
 from re import finditer
 
 from typing import Iterator
 from typing import Callable
+from typing import NamedTuple
 
 from datetime import date, time
 from datetime import timedelta
@@ -20,6 +21,12 @@ from .parse_functions import relative_patterns
 from .parse_functions import DateTuple
 from .parse_functions import absolute_functions_index
 from .parse_functions import relative_functions_index
+
+
+class DateResult(NamedTuple):
+    date: date
+    start: int
+    end: int
 
 
 class DateProcessor(SimpleNamespace):
@@ -127,14 +134,18 @@ class DateProcessor(SimpleNamespace):
         return cls.parse_funcs[date_tuple.pattern](date_tuple, base_date)
 
     @classmethod
-    def reduce_expression_set(cls, expr_elements: list[DateTuple], base_date: date) -> date:
+    def reduce_expression_set(
+        cls, expr_elements: list[DateTuple], base_date: date
+    ) -> date:
         """
         Takes a list of date tuples- any number that correspond to a relative date
         pattern, and exactly one corresponding to an absolute date pattern.
         Returns the date object created by summing them.
         """
 
-        if not isinstance(anchor_date := cls.parse_subexpr(expr_elements[-1], base_date), date):
+        if not isinstance(
+            anchor_date := cls.parse_subexpr(expr_elements[-1], base_date), date
+        ):
             raise ValueError
 
         if len(expr_elements) == 1:
@@ -149,15 +160,46 @@ class DateProcessor(SimpleNamespace):
         return anchor_date + reduce(lambda a, b: a + b, deltas)
 
     @classmethod
-    def iter_dates(cls, text: str, base_date: date, from_right: bool = False) -> Iterator[date]:
-        """Driver function to extract dates from text and iterate through them"""
+    def iter_expression_groups(
+        cls, text: str, base_date: date, from_right: bool = False
+    ) -> Iterator[list[DateTuple]]:
+        """Group expressions from text and iterate over them"""
 
         extracted_dates = [
             cls.match_to_tuple(m) for m in cls.extract_regex_matches(text)
         ]
 
+        if not extracted_dates:
+            return None
+
         if from_right:
             extracted_dates.reverse()
 
         for expr_set in cls.group_expressions(extracted_dates):
+            yield expr_set
+
+    @classmethod
+    def iter_dates(
+        cls, text: str, base_date: date, from_right: bool = False
+    ) -> Iterator[date | None]:
+        """Driver function to extract dates from text and iterate through them"""
+
+        for expr_set in cls.iter_expression_groups(
+            text, base_date, from_right=from_right
+        ):
             yield cls.reduce_expression_set(expr_set, base_date)
+
+    @classmethod
+    def iter_dates_span(
+        cls, text: str, base_date: date, from_right: bool = False
+    ) -> Iterator[DateResult | None]:
+
+        for expr_set in cls.iter_expression_groups(
+            text, base_date, from_right=from_right
+        ):
+            set_start = expr_set[0].start
+            set_end = expr_set[-1].end
+
+            date_result = cls.reduce_expression_set(expr_set, base_date)
+
+            yield DateResult(date=date_result, start=set_start, end=set_end)

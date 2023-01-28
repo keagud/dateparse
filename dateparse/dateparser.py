@@ -7,16 +7,9 @@ from datetime import date
 from typing import Iterator
 from typing import NamedTuple
 
-from parser.parse_functions import absolute_functions_index
-from parser.parse_functions import relative_functions_index
 
 from parser.date_processor import DateProcessor
-
-
-class DateResult(NamedTuple):
-    date: date
-    start: int
-    end: int
+from parser.date_processor import DateResult
 
 
 class DateParser:
@@ -106,21 +99,28 @@ class DateParser:
 
     def iter_dates(
         self, text: str, iter_backward: bool = False
-    ) -> Iterator[date | None]:  # type:ignore
+    ) -> Iterator[date | None]:
 
-    def get_first(self, text: str) -> date | None:  # type: ignore
-        pass
+        return DateProcessor.iter_dates(
+            text, self.current_date, from_right=iter_backward
+        )
 
-    def get_last(self, text: str) -> date | None:  # type: ignore
-        pass
+    def get_first(self, text: str) -> date | None:
+        return next(self.iter_dates(text))
+
+    def get_last(self, text: str) -> date | None:
+        return next(self.iter_dates(text, iter_backward=True))
 
     def iter_dates_span(
         self, text: str, iter_backward: bool = False
-    ) -> Iterator[date | None]:  # type:ignore
-        pass
+    ) -> Iterator[DateResult | None]:
 
-    def get_first_span(self, text: str) -> date | None:  # type: ignore
-        pass
+        return DateProcessor.iter_dates_span(
+            text, self.current_date, from_right=iter_backward
+        )
 
-    def get_last_span(self, text: str) -> date | None:  # type: ignore
-        pass
+    def get_first_span(self, text: str) -> DateResult | None:
+        return next(self.iter_dates_span(text))
+
+    def get_last_span(self, text: str) -> DateResult | None:
+        return next(self.iter_dates_span(text, iter_backward=True))
