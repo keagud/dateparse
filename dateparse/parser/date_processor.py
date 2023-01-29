@@ -1,23 +1,20 @@
-from re import S, Pattern
+from re import  Pattern
 from re import Match
 from re import finditer
 
 from typing import Iterator
 from typing import Callable
 from typing import NamedTuple
-from typing import overload
 
-from datetime import date, time
+from datetime import date
 from datetime import timedelta
 
 from itertools import chain
 
-from functools import reduce, singledispatchmethod
 
 from types import SimpleNamespace
 
 from .parse_functions import absolute_patterns
-from .parse_functions import relative_patterns
 
 from .parse_functions import DateTuple
 from .parse_functions import absolute_functions_index
