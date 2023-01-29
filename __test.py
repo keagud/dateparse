@@ -7,5 +7,6 @@ def pr(*args, **kwargs):
     print(s)
     return s
 
-pr(" a week from thurs")
+import pdb; pdb.set_trace()
+pr("January 2")
 

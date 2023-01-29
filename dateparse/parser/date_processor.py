@@ -10,6 +10,7 @@ from datetime import date
 from datetime import timedelta
 from functools import reduce
 
+
 from itertools import chain
 
 
@@ -37,11 +38,10 @@ class DateProcessor(SimpleNamespace):
     @classmethod
     def extract_regex_matches(cls, text: str) -> list[Match]:
 
-        return list(
-            chain.from_iterable(
-                (finditer(pattern, text) for pattern in cls.parse_funcs)
-            )
+        match_chain = chain.from_iterable(
+            (finditer(pattern, text) for pattern in cls.parse_funcs)
         )
+        return list(match_chain)
 
     @classmethod
     def match_to_tuple(cls, match: Match) -> DateTuple:
@@ -81,15 +81,15 @@ class DateProcessor(SimpleNamespace):
 
         # group consecutive matches
         def group_consecutive(dates: list[DateTuple]):
-            consec_run = []; import pdb; pdb.set_trace()
+            consec_run = []
             for i in dates:
-                if consec_run and consec_run[-1].end != i.start:
+                if consec_run and abs(consec_run[-1].end != i.start) > 1:
+                    print(f"{consec_run[-1].end} {i.start}")
                     yield consec_run
                     consec_run = [i]
                     continue
 
                 consec_run.append(i)
-            import pdb; pdb.set_trace()
             yield consec_run
 
         # enforce each group to consist of any number of relative expressions
@@ -110,7 +110,6 @@ class DateProcessor(SimpleNamespace):
         dates = remove_subgroups(cls.ordered_matches(dates))
 
         groups = reduce(lambda a, b: a + make_groups(b), group_consecutive(dates), [])
-        import pdb; pdb.set_trace()
 
         return groups
 
@@ -170,10 +169,16 @@ class DateProcessor(SimpleNamespace):
     ) -> Iterator[date | None]:
         """Driver function to extract dates from text and iterate through them"""
 
-        for expr_set in cls.iter_expression_groups(
-            text, base_date, from_right=from_right
-        ):
-            yield cls.reduce_expression_set(expr_set, base_date)
+        # fmt:off
+        import pdb; pdb.set_trace()
+        # fmt: on
+        expr_groups = cls.iter_expression_groups(text, base_date, from_right=from_right)
+        try:
+            for expr_set in expr_groups:
+                reduced_expr = cls.reduce_expression_set(expr_set, base_date)
+                yield reduced_expr
+        except StopIteration:
+            return None
 
     @classmethod
     def iter_dates_span(

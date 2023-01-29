@@ -40,9 +40,11 @@ class DateTuple(NamedTuple):
     end: int
 
 
-def normalize_number(number_term: str) -> int:
-
+def normalize_number(number_term: str | None) -> int:
     """Converts a number word as a string to an int, raises ValueError if not a number"""
+
+    if number_term is None:
+        return 1
 
     number_term = number_term.strip().lower()
 
@@ -201,8 +203,6 @@ def year_delta(input_date: date, years_count: int, forward: bool = True) -> time
 
 
 def relative_interval_parse(date_tuple: DateTuple, base_date: date) -> timedelta:
-
-    import pdb; pdb.set_trace()
     """Parse function for expressions like "Four days after", "a week before" """
 
     date_fields = date_tuple.fields

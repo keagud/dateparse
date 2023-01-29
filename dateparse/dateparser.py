@@ -109,7 +109,11 @@ class DateParser:
         return next(self.iter_dates(text))
 
     def get_last(self, text: str) -> date | None:
-        return next(self.iter_dates(text, iter_backward=True))
+        try:
+            d =  next(self.iter_dates(text, iter_backward=True))
+            return d
+        except StopIteration:
+            return None
 
     def iter_dates_span(
         self, text: str, iter_backward: bool = False
