@@ -1,5 +1,11 @@
 from dateparse import DateParser
 
-dp = DateParser()
 
-dp.get_first("a week from thursday")
+def pr(*args, **kwargs):
+    dp = DateParser()
+    s = dp.get_first(*args,**kwargs)
+    print(s)
+    return s
+
+pr(" a week from thurs")
+

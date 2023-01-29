@@ -1,4 +1,4 @@
-from re import  Pattern
+from re import Pattern
 from re import Match
 from re import finditer
 
@@ -8,6 +8,7 @@ from typing import NamedTuple
 
 from datetime import date
 from datetime import timedelta
+from functools import reduce
 
 from itertools import chain
 
@@ -80,14 +81,15 @@ class DateProcessor(SimpleNamespace):
 
         # group consecutive matches
         def group_consecutive(dates: list[DateTuple]):
-            consec_run = []
+            consec_run = []; import pdb; pdb.set_trace()
             for i in dates:
-                if consec_run and consec_run[-1][1] != i[0]:
+                if consec_run and consec_run[-1].end != i.start:
                     yield consec_run
                     consec_run = [i]
                     continue
 
                 consec_run.append(i)
+            import pdb; pdb.set_trace()
             yield consec_run
 
         # enforce each group to consist of any number of relative expressions
@@ -107,14 +109,14 @@ class DateProcessor(SimpleNamespace):
 
         dates = remove_subgroups(cls.ordered_matches(dates))
 
-        return reduce(
-            lambda a, b: a + make_groups(b), group_consecutive(dates), []
-        )
+        groups = reduce(lambda a, b: a + make_groups(b), group_consecutive(dates), [])
+        import pdb; pdb.set_trace()
+
+        return groups
 
     @classmethod
     def parse_subexpr(cls, date_tuple: DateTuple, base_date: date) -> date | timedelta:
         """Converts a date tuple to a date or timedelta, by calling its corresponding function"""
-        import pdb; pdb.set_trace()
         return cls.parse_funcs[date_tuple.pattern](date_tuple, base_date)
 
     @classmethod
