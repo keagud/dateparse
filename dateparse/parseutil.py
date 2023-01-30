@@ -15,7 +15,6 @@ from .parsefunctions import DateTuple
 from .parsefunctions import DateResult
 from .parsefunctions import ExpressionGrouping
 
-    date: datetime.date | datetime.timedelta | None = None
 
 
 def _extract_regex_matches(
@@ -56,33 +55,15 @@ def _ordered_matches(dates: list[DateTuple]) -> list[DateTuple]:
     start_sort = sorted(dates, key=lambda d: d.start)
     return sorted(start_sort, key=lambda d: d.end)
 
-
-def _reduce_exprs(base_date: datetime.date, accum_date: DateTuple, add_date: DateTuple):
-
-    """
-    Utility function for use with functools.reduce,
-    to combine a group of DateTuples into a single date
-    """
-<<<<<<< HEAD
-=======
-    
->>>>>>> 8a90596 (add IGNORECASE flag to all compiled regex patterns)
-
+   
+#>>>>>>> 8a90596 (add IGNORECASE flag to all compiled regex patterns)
 
 def preprocess_input(
     text: str,
     absolute_patterns: Iterable[re.Pattern],
     relative_patterns: Iterable[re.Pattern],
-<<<<<<< HEAD
 ) -> list[ExpressionGrouping]:
 
-=======
-) -> list[list[DateTuple]]:
-
-    import ipdb
-
-    ipdb.set_trace()
->>>>>>> 8a90596 (add IGNORECASE flag to all compiled regex patterns)
     # find all regex matches, convert to DateTuple objects, and sort by occurrence in the string
     pattern_set = list(it.chain(absolute_patterns, relative_patterns))
     regex_matches = _extract_regex_matches(text, pattern_set)
