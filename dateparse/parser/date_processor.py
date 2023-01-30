@@ -111,6 +111,10 @@ class DateProcessor(SimpleNamespace):
 
         groups = reduce(lambda a, b: a + make_groups(b), group_consecutive(dates), [])
 
+        # fmt:off
+        import pdb; pdb.set_trace()
+        # fmt:on
+
         return groups
 
     @classmethod
@@ -145,9 +149,9 @@ class DateProcessor(SimpleNamespace):
         return anchor_date + reduce(lambda a, b: a + b, deltas)
 
     @classmethod
-    def iter_expression_groups(
+    def get_expression_groups(
         cls, text: str, base_date: date, from_right: bool = False
-    ) -> Iterator[list[DateTuple]]:
+    ) -> list[list[DateTuple]] | None:
         """Group expressions from text and iterate over them"""
 
         extracted_dates = [
@@ -160,37 +164,46 @@ class DateProcessor(SimpleNamespace):
         if from_right:
             extracted_dates.reverse()
 
-        for expr_set in cls.group_expressions(extracted_dates):
-            yield expr_set
+        expr_set = cls.group_expressions(extracted_dates)
+        return expr_set
 
     @classmethod
-    def iter_dates(
+    def get_dates(
         cls, text: str, base_date: date, from_right: bool = False
-    ) -> Iterator[date | None]:
+    ) -> list[date] | None:
         """Driver function to extract dates from text and iterate through them"""
+        expr_groups = cls.get_expression_groups(text, base_date, from_right=from_right)
 
         # fmt:off
         import pdb; pdb.set_trace()
         # fmt: on
-        expr_groups = cls.iter_expression_groups(text, base_date, from_right=from_right)
-        try:
-            for expr_set in expr_groups:
-                reduced_expr = cls.reduce_expression_set(expr_set, base_date)
-                yield reduced_expr
-        except StopIteration:
+
+        if expr_groups is None:
             return None
+
+        dates_list = [cls.reduce_expression_set(s, base_date) for s in expr_groups]
+
+        return dates_list
 
     @classmethod
     def iter_dates_span(
         cls, text: str, base_date: date, from_right: bool = False
-    ) -> Iterator[DateResult | None]:
+    ) -> list[DateResult] | None:
 
-        for expr_set in cls.iter_expression_groups(
-            text, base_date, from_right=from_right
-        ):
+        expr_groups = cls.get_expression_groups(text, base_date, from_right=from_right)
+
+        if expr_groups is None:
+            return None
+
+        dates_span = []
+        for expr_set in expr_groups:
             set_start = expr_set[0].start
             set_end = expr_set[-1].end
 
             date_result = cls.reduce_expression_set(expr_set, base_date)
 
-            yield DateResult(date=date_result, start=set_start, end=set_end)
+            dates_span.append(
+                DateResult(date=date_result, start=set_start, end=set_end)
+            )
+
+        return dates_span
