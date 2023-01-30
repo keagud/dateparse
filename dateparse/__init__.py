@@ -1,5 +1,5 @@
 
 from .dateparser import DateParser
-from .relativedateparser import RelativeDateParser
+from .sessionparser import DateParserSession
 
 

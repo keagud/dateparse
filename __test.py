@@ -1,12 +1,20 @@
-from dateparse import DateParser
+
+from dateparse.parsefunctions import absolute_patterns
+from dateparse.parsefunctions import relative_patterns
 
 
-def pr(*args, **kwargs):
-    dp = DateParser()
-    s = dp.get_first(*args,**kwargs)
-    print(s)
-    return s
+pset = absolute_patterns + relative_patterns
+from dateparse.parseutil import DateTuple, _match_to_tuple, _extract_regex_matches
 
-import ipdb; ipdb.set_trace()
-pr("January 2")
+test_inputs = ["A week from today", "Ten days from today", "January 2"]
+
+for t in test_inputs:
+    t = t.lower()
+    x = _extract_regex_matches(t, pset)
+
+    for i in x:
+        print(i)
+    print("DONE")
+
+
 

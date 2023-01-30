@@ -7,7 +7,6 @@ from datetime import date
 from typing import Iterator
 
 from .dateparser import DateParser
-from .dateparser import DateResult
 
 
 class DateParserSession(DateParser):
@@ -83,10 +82,12 @@ class DateParserSession(DateParser):
         if named_days is not None:
             self.named_days.update(named_days)
 
-    def get_dates_list(
-        self, text: str, iter_backward: bool = False
-    ) -> list[date] | None:
+    def __enter__(self):
+        pass
 
-        return super().get_dates(
-            text, base_date=self.current_date, from_right=iter_backward
-        )
+    def __exit__(self):
+        pass
+
+    def get_dates_list():
+            pass
+

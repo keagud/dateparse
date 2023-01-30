@@ -19,6 +19,7 @@ from .regex_utils import RELATIVE_INTERVAL_PATTERN
 from .regex_utils import QUICK_DAYS_PATTERN
 
 from .regex_utils import NUMBER_WORDS
+from .parseutil import DateTuple
 
 
 absolute_patterns = [
@@ -28,16 +29,6 @@ absolute_patterns = [
     QUICK_DAYS_PATTERN,
 ]
 relative_patterns = [RELATIVE_INTERVAL_PATTERN]
-
-
-class DateTuple(NamedTuple):
-    """Container for data about a matched date expression"""
-
-    pattern: Pattern
-    fields: dict
-    content: str
-    start: int
-    end: int
 
 
 def normalize_number(number_term: str | None) -> int:
