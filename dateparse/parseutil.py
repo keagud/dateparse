@@ -138,22 +138,21 @@ def get_expression_span(expr: ExpressionGrouping):
     return (expr_start, expr.anchor.end)
 
 
-def reduce_expressions(base_date: datetime.date, expr_groups: list[ExpressionGrouping]):
+def reduce_expression(base_date: datetime.date, expr: ExpressionGrouping):
 
-    for group in expr_groups:
-        deltas = group.deltas
-        anchor = group.anchor
+    deltas = expr.deltas
+    anchor = expr.anchor
 
-        resulting_date = parse_expression_group(base_date, group)
-        start, end = get_expression_span(group)
+    resulting_date = parse_expression_group(base_date, expr)
+    start, end = get_expression_span(expr)
 
-        delta_content = " ".join([d.content for d in deltas] )
+    delta_content = " ".join([d.content for d in deltas] )
 
-        expr_content = f"{delta_content} {anchor.content}".strip()
+    expr_content = f"{delta_content} {anchor.content}".strip()
 
-        new_date_result = DateResult(resulting_date, start, end, expr_content)
+    new_date_result = DateResult(resulting_date, start, end, expr_content)
 
-        yield new_date_result
+    yield new_date_result
 
         
 
