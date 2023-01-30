@@ -1,88 +1,41 @@
-"""
-Defines the API for the main operations exposed by the Dateparse package,
-via the DateParser class.
-"""
+from re import Pattern
+from re import Match
+from re import finditer
 
-from datetime import date
 from typing import Iterator
+from typing import Callable
 from typing import NamedTuple
 
+from datetime import date
+from datetime import timedelta
+from functools import reduce
 
-from .parser.date_processor import DateProcessor
-from .parser.date_processor import DateResult
+
+from itertools import chain
+
+from .parsefunctions import absolute_patterns
+
+from .parsefunctions import DateTuple
+from .parsefunctions import absolute_functions_index
+from .parsefunctions import relative_functions_index
+
+
+class DateResult(NamedTuple):
+    date: date
+    start: int
+    end: int
 
 
 class DateParser:
-    """
-    The intended interface for converting a natural language date expression into a date
-    (datetime.date) object.
-
-    Attributes:
-    ------------
-
-    current_date: datetime.date
-        The date to be used to determine how to parse expressions that require temporal context,
-        e.g. "A week from this Sunday", "In four days"
-
-        If not passed into the constructor, defaults to the current date
-        (datetime.date.today()).
-
-    named_days: dict[str,str]
-        Aliases for date expressions; occurrences of each key will be substituted for
-        the corresponding value before parsing begins.
-
-        This allows for dates of personal importance to be named directly.
-        e.g. {'my birthday': 'october 17'} will cause the string 'my birthday'
-        to act as an alias for 'october 17'
-
-
-    Methods:
-    ___________
-
-    __init__(current_date: datetime.date | None = None,
-        named_days: dict[str,str] | None = None, allow_past: bool = False) -> None:
-        Constructor for creating a new DateParser object.
-
-    sub_named_days(text:str) -> str:
-        Substitutes each occurrence of a defined alias from named_days
-        (both passed in at init time or included from the defaults list)
-        with its corresponding replacement string.
-
-    iter_dates(text: str, iter_backward: bool = False) -> Iterator[date]:
-        The main general-purpose parse method. Takes a text string, and yields
-        date objects for each matched date expression from left to right, or
-        right to left if iter_backward is set to True.
-
-    get_first(text:str) , get_last(text:str)->date
-        Wrappers for iter_dates to get only the
-        leftmost or rightmost expression, respectively
-
-    iter_dates_span(text:str) -> Iterator[tuple[date, int, int]]
-    get_first_span, get_last_span -> tuple[date, int, int]
-        These all take the same parameters as iter_dates, get_first and get_last, respectively.
-        The only difference is that the span of the matched expression within the input text is
-        returned as well. The returned date object is a NamedTuple with fields (date, start, end)
-        accessible by direct reference or unpacking
-
-    """
 
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
 
-    def __init__(
-        self,
-        current_date: date | None = None,
-        named_days: dict[str, str] | None = None,
-        allow_past: bool = False,
-    ) -> None:
+    parse_funcs: dict[Pattern, Callable] = (
+        absolute_functions_index | relative_functions_index
+    )
 
-        self.current_date = current_date if current_date is not None else date.today()
-
+    def __init__(self):
         self.named_days = self.default_named_days
-
-        self.allow_past = allow_past
-
-        if named_days is not None:
-            self.named_days.update(named_days)
 
     def sub_named_days(self, text: str):
 
@@ -97,30 +50,170 @@ class DateParser:
                 text = text.replace(day_name, repl_str)
         return text
 
-    def get_dates_list(
-        self, text: str, iter_backward: bool = False
-    ) -> list[date] | None:
+    def extract_regex_matches(self, text: str) -> list[Match]:
 
-        return DateProcessor.get_dates(
-            text, base_date=self.current_date, from_right=iter_backward
+        match_chain = chain.from_iterable(
+            (finditer(pattern, text) for pattern in self.parse_funcs)
+        )
+        return list(match_chain)
+
+    def match_to_tuple(self, match: Match) -> DateTuple:
+        if not match.re in self.parse_funcs:
+            raise ValueError("Match cannot be converted: not a known pattern")
+
+        return DateTuple(
+            pattern=match.re,
+            content=match.group(),
+            fields=match.groupdict(),
+            start=match.start(),
+            end=match.end(),
         )
 
-    def get_first(self, text: str) -> date | None:
+    def ordered_matches(self, dates: list[DateTuple]) -> list[DateTuple]:
+        start_sort = sorted(dates, key=lambda d: d.start)
+        return sorted(start_sort, key=lambda d: d.end)
 
-        dates_list = DateProcessor.get_dates(text, base_date=self.current_date)
+    def group_expressions(self, dates: list[DateTuple]) -> list[list[DateTuple]]:
+        """
+        Group expressions into sublists, representing a string of consecutive expressions of
+        this form: any number of relative expressions followed by exactly one absolute expression.
+        """
 
-        return None if dates_list is None else dates_list[0]
+        def remove_subgroups(dates: list[DateTuple]):
 
-    def get_last(self, text: str) -> date | None:
-        pass
+            # remove any matches fully contained within another match
+            for first, second, third in zip(dates[:-1], dates[1:-1], dates[2:]):
+                if (second.start >= first.start and second.end <= first.end) or (
+                    second.start >= third.start and second.end <= third.end
+                ):
+                    dates.remove(second)
+
+            return dates
+
+        # group consecutive matches
+        def group_consecutive(dates: list[DateTuple]):
+            consec_run = []
+            for i in dates:
+                if consec_run and abs(consec_run[-1].end != i.start) > 1:
+                    print(f"{consec_run[-1].end} {i.start}")
+                    yield consec_run
+                    consec_run = [i]
+                    continue
+
+                consec_run.append(i)
+            yield consec_run
+
+        # enforce each group to consist of any number of relative expressions
+        # + exactly one absolute expression
+        def make_groups(dates: list[DateTuple]):
+            groups: list[list[DateTuple]] = []
+            group: list[DateTuple] = []
+            for d in dates:
+                if d.pattern in absolute_patterns:
+                    group.append(d)
+                    groups.append(group)
+                    group = []
+                    continue
+
+                group.append(d)
+            return groups
+
+        dates = remove_subgroups(self.ordered_matches(dates))
+
+        groups = reduce(lambda a, b: a + make_groups(b), group_consecutive(dates), [])
+
+        # fmt:off
+        import ipdb; ipdb.set_trace()
+        # fmt:on
+
+        return groups
+
+    def parse_subexpr(self, date_tuple: DateTuple, base_date: date) -> date | timedelta:
+        """Converts a date tuple to a date or timedelta, by calling its corresponding function"""
+        return self.parse_funcs[date_tuple.pattern](date_tuple, base_date)
+
+    def reduce_expression_set(
+        self, expr_elements: list[DateTuple], base_date: date
+    ) -> date:
+        """
+        Takes a list of date tuples- any number that correspond to a relative date
+        pattern, and exactly one corresponding to an absolute date pattern.
+        Returns the date object created by summing them.
+        """
+
+        if not isinstance(
+            anchor_date := self.parse_subexpr(expr_elements[-1], base_date), date
+        ):
+            raise ValueError
+
+        if len(expr_elements) == 1:
+            return anchor_date
+
+        deltas: list[timedelta] = [
+            parse_result
+            for e in expr_elements[:-1]
+            if isinstance(parse_result := self.parse_subexpr(e, base_date), timedelta)
+        ]
+
+        return anchor_date + reduce(lambda a, b: a + b, deltas)
+
+    def get_expression_groups(
+        self, text: str, base_date: date, from_right: bool = False
+    ) -> list[list[DateTuple]] | None:
+        """Group expressions from text and iterate over them"""
+
+        extracted_dates = [
+            self.match_to_tuple(m) for m in self.extract_regex_matches(text)
+        ]
+
+        if not extracted_dates:
+            return None
+
+        if from_right:
+            extracted_dates.reverse()
+
+        expr_set = self.group_expressions(extracted_dates)
+        return expr_set
+
+    def get_dates(
+        self, text: str, base_date: date, from_right: bool = False
+    ) -> list[date] | None:
+        """Driver function to extract dates from text and iterate through them"""
+        expr_groups = self.get_expression_groups(text, base_date, from_right=from_right)
+
+        # fmt:off
+        import ipdb; ipdb.set_trace()
+        # fmt: on
+
+        if expr_groups is None:
+            return None
+
+        dates_list = [self.reduce_expression_set(s, base_date) for s in expr_groups]
+
+        return dates_list
 
     def iter_dates_span(
-        self, text: str, iter_backward: bool = False
-    ) -> Iterator[DateResult | None]:  # type: ignore
+        self, text: str, base_date: date, from_right: bool = False
+    ) -> list[DateResult] | None:
+
+        expr_groups = self.get_expression_groups(text, base_date, from_right=from_right)
+
+        if expr_groups is None:
+            return None
+
+        dates_span = []
+        for expr_set in expr_groups:
+            set_start = expr_set[0].start
+            set_end = expr_set[-1].end
+
+            date_result = self.reduce_expression_set(expr_set, base_date)
+
+            dates_span.append(
+                DateResult(date=date_result, start=set_start, end=set_end)
+            )
+
+        return dates_span
+
+    @classmethod
+    def parse(cls, text: str, base_date: date | None = None):
         pass
-
-    def get_first_span(self, text: str) -> DateResult | None:
-        return next(self.iter_dates_span(text))
-
-    def get_last_span(self, text: str) -> DateResult | None:
-        return next(self.iter_dates_span(text, iter_backward=True))
