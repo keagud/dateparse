@@ -1,6 +1,7 @@
 """Constant definitions and pre-compilation of regex patterns"""
-from re import compile as compile_pattern
+import re
 from typing import Iterable
+import functools
 
 
 MONTH_SHORTNAMES = [
@@ -30,6 +31,9 @@ WEEKDAY_SHORTNAMES = [
     "sun",
 ]  # one-indexed for symmetry with MONTH_SHORTNAMES[],
 # and to line up with datetime.date.isoweekday()
+
+
+compile_pattern = functools.partial(re.compile, flags=re.IGNORECASE)
 
 TIME_INTERVAL_TYPES = {"day": 1, "week": 7, "month": 30, "year": 365}
 
