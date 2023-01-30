@@ -14,18 +14,11 @@ from functools import reduce
 from itertools import chain
 
 from .parsefunctions import absolute_patterns
-
 from .parsefunctions import DateTuple
-from .parsefunctions import absolute_functions_index
-from .parsefunctions import relative_functions_index
 
 class DateParser:
 
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
-
-    parse_funcs: dict[Pattern, Callable] = (
-        absolute_functions_index | relative_functions_index
-    )
 
     def __init__(self):
         self.named_days = self.default_named_days
@@ -42,3 +35,5 @@ class DateParser:
             if day_name in text:
                 text = text.replace(day_name, repl_str)
         return text
+
+

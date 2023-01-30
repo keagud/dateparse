@@ -1,4 +1,3 @@
-import typing
 import math
 
 from typing import Iterable
@@ -10,6 +9,9 @@ import itertools as it
 
 from .parsefunctions import absolute_functions_index
 from .parsefunctions import relative_functions_index
+
+from .parsefunctions import absolute_patterns
+from .parsefunctions import relative_patterns
 
 from .parsefunctions import DateTuple
 from .parsefunctions import DateResult
@@ -55,14 +57,15 @@ def _ordered_matches(dates: list[DateTuple]) -> list[DateTuple]:
     start_sort = sorted(dates, key=lambda d: d.start)
     return sorted(start_sort, key=lambda d: d.end)
 
-   
-#>>>>>>> 8a90596 (add IGNORECASE flag to all compiled regex patterns)
 
-def preprocess_input(
+def _partial_preprocess_input(
     text: str,
-    absolute_patterns: Iterable[re.Pattern],
-    relative_patterns: Iterable[re.Pattern],
+    absolute_patterns: Iterable[re.Pattern] | None = None,
+    relative_patterns: Iterable[re.Pattern] | None = None,
 ) -> list[ExpressionGrouping]:
+
+    if absolute_patterns is None or relative_patterns is None:
+        raise ValueError
 
     # find all regex matches, convert to DateTuple objects, and sort by occurrence in the string
     pattern_set = list(it.chain(absolute_patterns, relative_patterns))
@@ -93,6 +96,13 @@ def preprocess_input(
         group_deltas.append(tup)
 
     return all_groups
+
+
+preprocess_input: Callable[[str], list[ExpressionGrouping]] = fn.partial(
+    _partial_preprocess_input,
+    absolute_patterns=absolute_patterns,
+    relative_patterns=relative_patterns,
+)
 
 
 def _partial_parse_expression_group(
@@ -146,15 +156,21 @@ def reduce_expression(base_date: datetime.date, expr: ExpressionGrouping):
     resulting_date = parse_expression_group(base_date, expr)
     start, end = get_expression_span(expr)
 
-    delta_content = " ".join([d.content for d in deltas] )
+    delta_content = " ".join([d.content for d in deltas])
 
     expr_content = f"{delta_content} {anchor.content}".strip()
 
     new_date_result = DateResult(resulting_date, start, end, expr_content)
 
-    yield new_date_result
+    return new_date_result
 
-        
 
+def basic_parse(base_date: datetime.date, text: str):
+    expressions = preprocess_input(text)
+
+    if not expressions:
+        return None
+
+    return reduce_expression(base_date, expressions[0])
 
 
