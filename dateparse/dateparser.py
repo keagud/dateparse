@@ -97,31 +97,27 @@ class DateParser:
                 text = text.replace(day_name, repl_str)
         return text
 
-    def iter_dates(
+    def get_dates_list(
         self, text: str, iter_backward: bool = False
-    ) -> Iterator[date | None]:
+    ) -> list[date] | None:
 
-        return DateProcessor.iter_dates(
-            text, self.current_date, from_right=iter_backward
+        return DateProcessor.get_dates(
+            text, base_date=self.current_date, from_right=iter_backward
         )
 
     def get_first(self, text: str) -> date | None:
-        return next(self.iter_dates(text))
+
+        dates_list = DateProcessor.get_dates(text, base_date=self.current_date)
+
+        return None if dates_list is None else dates_list[0]
 
     def get_last(self, text: str) -> date | None:
-        try:
-            d =  next(self.iter_dates(text, iter_backward=True))
-            return d
-        except StopIteration:
-            return None
+        pass
 
     def iter_dates_span(
         self, text: str, iter_backward: bool = False
-    ) -> Iterator[DateResult | None]:
-
-        return DateProcessor.iter_dates_span(
-            text, self.current_date, from_right=iter_backward
-        )
+    ) -> Iterator[DateResult | None]:  # type: ignore
+        pass
 
     def get_first_span(self, text: str) -> DateResult | None:
         return next(self.iter_dates_span(text))
