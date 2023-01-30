@@ -2,20 +2,20 @@ import typing
 import math
 
 from typing import Iterable
+from typing import Callable
 import datetime
 import re
 import functools as fn
 import itertools as it
 
+from .parsefunctions import absolute_functions_index
+from .parsefunctions import relative_functions_index
 
-class DateTuple(typing.NamedTuple):
-    """Container for data about a matched date expression"""
+from .parsefunctions import DateTuple
+from .parsefunctions import DateResult
+from .parsefunctions import ExpressionGrouping
 
-    pattern: re.Pattern
-    fields: dict
-    content: str
-    start: int
-    end: int
+    date: datetime.date | datetime.timedelta | None = None
 
 
 def _extract_regex_matches(
@@ -23,14 +23,13 @@ def _extract_regex_matches(
 ) -> list[re.Match]:
 
     match_chain = it.chain.from_iterable(
-
         (re.finditer(pattern, text) for pattern in pattern_set)
     )
 
     return list(match_chain)
 
 
-def _match_to_tuple(match: re.Match):
+def _match_to_tuple(match: re.Match) -> DateTuple:
 
     return DateTuple(
         pattern=match.re,
@@ -41,7 +40,7 @@ def _match_to_tuple(match: re.Match):
     )
 
 
-def _remove_subgroups(dates: list[DateTuple]):
+def _remove_subgroups(dates: list[DateTuple]) -> list[DateTuple]:
 
     # remove any matches fully contained within another match
     for first, second, third in zip(dates[:-1], dates[1:-1], dates[2:]):
@@ -58,67 +57,124 @@ def _ordered_matches(dates: list[DateTuple]) -> list[DateTuple]:
     return sorted(start_sort, key=lambda d: d.end)
 
 
-def _reduce_exprs(
-    absolute_patterns: Iterable[re.Pattern],
-    exprs_list: list[list[DateTuple]],
-    dates_set: list[DateTuple],
-):
-    groups = _make_groups(dates_set, absolute_patterns)
-    exprs_list.extend(groups)
+def _reduce_exprs(base_date: datetime.date, accum_date: DateTuple, add_date: DateTuple):
 
-    return exprs_list
+    """
+    Utility function for use with functools.reduce,
+    to combine a group of DateTuples into a single date
+    """
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 8a90596 (add IGNORECASE flag to all compiled regex patterns)
 
 
 def preprocess_input(
     text: str,
     absolute_patterns: Iterable[re.Pattern],
     relative_patterns: Iterable[re.Pattern],
-):
+<<<<<<< HEAD
+) -> list[ExpressionGrouping]:
 
-    import ipdb; ipdb.set_trace()
+=======
+) -> list[list[DateTuple]]:
+
+    import ipdb
+
+    ipdb.set_trace()
+>>>>>>> 8a90596 (add IGNORECASE flag to all compiled regex patterns)
     # find all regex matches, convert to DateTuple objects, and sort by occurrence in the string
     pattern_set = list(it.chain(absolute_patterns, relative_patterns))
     regex_matches = _extract_regex_matches(text, pattern_set)
-
     match_tuples = [_match_to_tuple(m) for m in regex_matches]
-
     match_tuples = _ordered_matches(match_tuples)
 
+    match_tuples = _remove_subgroups(match_tuples)
+
     # group date tuples
-    all_groups: list[list[DateTuple]] = []
-    this_group: list[DateTuple] = []
+    all_groups: list[ExpressionGrouping] = []
+    group_deltas: list[DateTuple] = []
 
     for tup in match_tuples:
 
         if tup.pattern in absolute_patterns:
-            this_group.append(tup)
-            all_groups.append(this_group)
-            this_group = []
+            new_expr = ExpressionGrouping(anchor=tup, deltas=group_deltas)
+            all_groups.append(new_expr)
+            group_deltas = []
             continue
 
-        if this_group and not math.isclose(this_group[-1].end, tup.start, rel_tol=1):
-            this_group = []
+        if group_deltas and not math.isclose(
+            group_deltas[-1].end, tup.start, rel_tol=1
+        ):
+            group_deltas = []
             continue
 
-        this_group.append(tup)
+        group_deltas.append(tup)
 
     return all_groups
 
 
-def _group_expressions(
-    dates: list[DateTuple],
-    absolute_patterns: Iterable[re.Pattern],
-    relative_patterns: Iterable[re.Pattern],
-) -> list[list[DateTuple]]:
-    """
-    Group expressions into sublists, representing a string of consecutive expressions of
-    this form: any number of relative expressions followed by exactly one absolute expression.
-    # enforce each group to consist of any number of relative expressions
-    # + exactly one absolute expression
-    """
+def _partial_parse_expression_group(
+    base_date: datetime.date,
+    expr_group: ExpressionGrouping,
+    abs_index=None,
+    rel_index=None,
+) -> datetime.date:
 
-    reduce_fn = fn.partial(_reduce_exprs, absolute_patterns)
-    consec_groups = _make_groups(dates, absolute_patterns)
+    if abs_index is None or rel_index is None:
+        raise ValueError
 
-    groups = fn.reduce(reduce_fn, consec_groups, [])
-    return groups
+    anchor_date_tuple = expr_group.anchor
+
+    anchor_parser = abs_index[anchor_date_tuple.pattern]
+
+    anchor_date = anchor_parser(anchor_date_tuple, base_date)
+
+    delta_sum = datetime.timedelta(days=0)
+    for delta in expr_group.deltas:
+        delta_parser = rel_index[delta.pattern]
+        delta_sum += delta_parser(delta, base_date)
+
+    return anchor_date + delta_sum
+
+
+parse_expression_group: Callable[
+    [datetime.date, ExpressionGrouping], datetime.date
+] = fn.partial(
+    _partial_parse_expression_group,
+    abs_index=absolute_functions_index,
+    rel_index=relative_functions_index,
+)
+
+
+def get_expression_span(expr: ExpressionGrouping):
+
+    if not expr.deltas:
+        return (expr.anchor.start, expr.anchor.end)
+
+    expr_start = min(d.start for d in expr.deltas)
+
+    return (expr_start, expr.anchor.end)
+
+
+def reduce_expressions(base_date: datetime.date, expr_groups: list[ExpressionGrouping]):
+
+    for group in expr_groups:
+        deltas = group.deltas
+        anchor = group.anchor
+
+        resulting_date = parse_expression_group(base_date, group)
+        start, end = get_expression_span(group)
+
+        delta_content = " ".join([d.content for d in deltas] )
+
+        expr_content = f"{delta_content} {anchor.content}".strip()
+
+        new_date_result = DateResult(resulting_date, start, end, expr_content)
+
+        yield new_date_result
+
+        
+
+
+

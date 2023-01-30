@@ -5,7 +5,10 @@ from datetime import date, timedelta
 from calendar import monthrange
 from calendar import isleap
 from itertools import repeat
+import typing
 import datetime
+
+import re
 
 from .regex_utils import TIME_INTERVAL_TYPES
 from .regex_utils import NEGATIVE_INTERVAL_WORDS
@@ -19,7 +22,28 @@ from .regex_utils import RELATIVE_INTERVAL_PATTERN
 from .regex_utils import QUICK_DAYS_PATTERN
 
 from .regex_utils import NUMBER_WORDS
-from .parseutil import DateTuple
+
+
+class DateTuple(typing.NamedTuple):
+    """Container for data about a matched date expression"""
+
+    pattern: re.Pattern
+    fields: dict
+    content: str
+    start: int
+    end: int
+
+    date: datetime.date | datetime.timedelta | None = None
+
+class DateResult(typing.NamedTuple):
+    date: datetime.date
+    start:int
+    end: int
+    content: str
+
+class ExpressionGrouping(typing.NamedTuple):
+    anchor: DateTuple
+    deltas: list[DateTuple]
 
 
 absolute_patterns = [
