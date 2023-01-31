@@ -18,7 +18,6 @@ from .parsefunctions import DateResult
 from .parsefunctions import ExpressionGrouping
 
 
-
 def _extract_regex_matches(
     text: str, pattern_set: Iterable[re.Pattern]
 ) -> list[re.Match]:
@@ -165,12 +164,12 @@ def reduce_expression(base_date: datetime.date, expr: ExpressionGrouping):
     return new_date_result
 
 
-def basic_parse(base_date: datetime.date, text: str):
+def basic_parse(base_date: datetime.date, text: str, from_right: bool = False):
     expressions = preprocess_input(text)
 
     if not expressions:
         return None
 
-    return reduce_expression(base_date, expressions[0])
+    target_expr = expressions[-1] if from_right else expressions[0]
 
-
+    return reduce_expression(base_date, target_expr)

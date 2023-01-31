@@ -86,13 +86,15 @@ def mdy_parse(date_tuple: DateTuple, base_date: date) -> date:
     day_str: str = date_fields["day"]
 
     if not month_str.isnumeric():
-        month = MONTH_SHORTNAMES.index(month_str)
+        month = MONTH_SHORTNAMES.index(month_str.lower())
     else:
         month = int(month_str)
 
     day = int(day_str)
 
-    year = int(date_fields["year"]) if "year" in date_fields else base_date.year
+    year= base_date.year
+    if "year" in date_fields and date_fields['year'] is not None:
+        year = int(date_fields["year"]) 
 
     return date(year, month, day)
 
