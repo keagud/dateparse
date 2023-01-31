@@ -147,7 +147,7 @@ def quick_day_parse(date_tuple: DateTuple, base_date: date) -> date:
     return base_date + offset
 
 
-def months_iter(d: date, forward: bool = True):
+def months_iter(d: date, backward: bool = False):
     class MonthInfo(NamedTuple):
         days: int
         month_num: int
@@ -156,9 +156,9 @@ def months_iter(d: date, forward: bool = True):
     start_month = d.month
     start_year = d.year
 
-    month_range_start = 1 if forward else 12
-    month_range_end = 13 if forward else 0
-    step = 1 if forward else -1
+    month_range_start = 1 if not backward else 12
+    month_range_end = 13 if not backward else 0
+    step = 1 if not backward else -1
 
     def pack_month_info(y: int, m: int):
         _, month_days = monthrange(y, m)
@@ -177,36 +177,39 @@ def months_iter(d: date, forward: bool = True):
         month_year += step
 
 
-def month_delta(input_date: date, months_count: int, forward: bool = True):
+def month_delta(input_date: date, months_count: int, backward: bool = False):
     """
     Get a timedelta for the span months_count after input_date,
     or before if forward is False.
     """
     total_days: int = 0
 
-    delta_iter = months_iter(input_date, forward=forward)
+    delta_iter = months_iter(input_date, backward=backward)
     next(delta_iter)
     for _ in range(months_count):
         total_days += next(delta_iter).days
 
-    if not forward:
+    if not backward:
         total_days *= -1
 
     return timedelta(days=total_days)
 
 
-def year_delta(input_date: date, years_count: int, forward: bool = True) -> timedelta:
+def year_delta(input_date: date, years_count: int, backward: bool = False) -> timedelta:
     """
     Get a timedelta of years_count years after input_date,
     or before if forward is False.
     Accounts for leap years.
     """
 
+    import ipdb
+
+    ipdb.set_trace()
     start_year = input_date.year
     start_month = input_date.month
     start_day = input_date.day
 
-    if not forward:
+    if backward:
         years_count *= -1
 
     end_year = start_year + years_count
@@ -232,10 +235,10 @@ def relative_interval_parse(date_tuple: DateTuple, base_date: date) -> timedelta
     negative_interval = preposition in NEGATIVE_INTERVAL_WORDS
 
     if interval_name_str == "month":
-        return month_delta(base_date, units_count, forward=negative_interval)
+        return month_delta(base_date, units_count, backward=negative_interval)
 
     if interval_name_str == "year":
-        return year_delta(base_date, units_count, forward=negative_interval)
+        return year_delta(base_date, units_count, backward=negative_interval)
 
     if interval_name_str == "week":
         interval_name_str = "day"

@@ -6,7 +6,6 @@ import datetime
 import re
 import functools as fn
 import itertools as it
-
 from .parsefunctions import absolute_functions_index
 from .parsefunctions import relative_functions_index
 
@@ -161,31 +160,37 @@ def get_expression_span(expr: ExpressionGrouping):
     return (expr_start, expr.anchor.end)
 
 
-def reduce_expression(base_date: datetime.date, expr: ExpressionGrouping, allow_past: bool =False):
+def reduce_expression(
+    base_date: datetime.date, expr: ExpressionGrouping, allow_past: bool = False
+):
 
     deltas = expr.deltas
     anchor = expr.anchor
 
     resulting_date = parse_expression_group(base_date, expr)
 
-    if resulting_date < base_date and not allow_past:
+    if resulting_date.toordinal() < base_date.toordinal() and not allow_past:
         bumped_year = resulting_date.year + 1
-        resulting_date.replace(year=bumped_year)
+        resulting_date = resulting_date.replace(year=bumped_year)
 
     start, end = get_expression_span(expr)
 
-    delta_content = " ".join([d.content for d in deltas])
+    # TODO this prints with weird whitespace
+    delta_content = "".join([d.content for d in deltas])
 
-    expr_content = f"{delta_content} {anchor.content}".strip()
+    expr_content = f"{delta_content}{anchor.content}".strip()
 
     new_date_result = DateResult(resulting_date, start, end, expr_content)
-
-
 
     return new_date_result
 
 
-def basic_parse(base_date: datetime.date, text: str, from_right: bool = False, allow_past: bool = False):
+def basic_parse(
+    base_date: datetime.date,
+    text: str,
+    from_right: bool = False,
+    allow_past: bool = False,
+):
     expressions = preprocess_input(text)
 
     if not expressions:
@@ -193,10 +198,15 @@ def basic_parse(base_date: datetime.date, text: str, from_right: bool = False, a
 
     target_expr = expressions[-1] if from_right else expressions[0]
 
-    return reduce_expression(base_date, target_expr, allow_past=allow_past )
+    return reduce_expression(base_date, target_expr, allow_past=allow_past)
 
 
-def iter_parse(base_date: datetime.date, text: str, from_right: bool = False, allow_past: bool = False):
+def iter_parse(
+    base_date: datetime.date,
+    text: str,
+    from_right: bool = False,
+    allow_past: bool = False,
+):
     expressions = preprocess_input(text)
 
     if not expressions:

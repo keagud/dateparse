@@ -33,7 +33,7 @@ def test_parser(make_parser_group):
         test_date = datetime.date(*test_date_vals)
 
         assert parser.get_last_date(input_text) == test_date
-        assert parser.get_last_date(input_text) == parser.get_first(input_text)
+        assert parser.get_last_date(input_text) == parser.get_first_date(input_text)
 
 
 @pytest.mark.skip(reason="learn to walk before you can run")
