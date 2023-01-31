@@ -57,7 +57,7 @@ def test_multiple_expressions(make_parser_group):
 
     input_text = " ".join(inputs)
 
-    iter_parser = parser.iter_dates(input_text)
+    iter_parser = parser.get_all(input_text)
 
     for inp, outp in zip(expected_dates, iter_parser):
         assert inp == outp.date

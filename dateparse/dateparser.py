@@ -1,32 +1,62 @@
 """
-
-    Defines a class for parsing multiple dates while maintaining 
-    a persistant base date and user-defined named days.
-
-    DateParser: Main interface class for stateful parsing
-
-        __init__(base_date = None, named_days = None) -> None:
-
-
-        sub_named_days(text: str)
-
-        get_first(text: str)
-
-        get_last(text: str)
-
-
-        get_first_date(text: str)
-        get_last_date(text: str)
-
-
+Defines the DateParser class, which wraps parse functionality 
+while remembering user-defined preferences
 """
+
 import datetime
+
 from .parsefunctions import DateResult
 from .parseutil import basic_parse
-from .parseutil import iter_parse
+from .parseutil import parse_all
+from .parseutil import parse_all_dates
 
 
 class DateParser:
+    """
+   Defines a class for parsing multiple dates while maintaining
+   a persistant base date and user-defined named days.
+
+
+   __init__(base_date = None, named_days = None) -> None:
+       base_date: a datetime.date object to be used as the reference to
+       any parse function calls from this class's methods. 
+       If unspecified or None, defaults to the current date (datetime.date.today())
+
+       named_days: a dictionary with string keys and values. For example:
+        {"my birthday":"september 9"}
+
+        before parsing a string, all instances of each key will
+        be replaced with the corresponding value
+
+        A default pre-defined dictionary of named dates containing all (American) holidays with
+        a fixed date representation is always enabled in addition.
+
+   sub_named_days(text: str)
+       Substitutes each occurrence of a key in self.named_days for its value.
+       Returns the modified string
+
+   get_first(text: str) -> DateResult | None
+   get_last(text: str) -> DateResult | None
+
+       Get the first or last occurrence of date expression within the text.
+       Both return a DateResult object.
+       A DateResult is a named tuple (typing.NamedTuple) defined in parsefunctions.py
+
+
+   get_first_date(text: str) -> datetime.date | None
+   get_last_date(text: str) -> datetime.date | None
+
+       Identical to get_first and get_last, respectively,
+       but will return only the date for convenience.
+
+
+get_all( text: str, from_right: bool = False, allow_past: bool = False) -> list[datetime.date] | None
+get_all_dates( text: str, from_right: bool = False, allow_past: bool = False) -> list[datetime.date] | None:
+
+   These both get all dates found in the input text, and return them as a list.
+   get_all returns a list of DateResult tuples, and get_all_dates returns a list of bare datetime.date objects; this is the only difference
+
+    """
 
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
 
@@ -35,6 +65,11 @@ class DateParser:
         base_date: datetime.date | None = None,
         named_days: dict[str, str] | None = None,
     ):
+
+        """
+        Constructor for DateParser
+
+        """
 
         self.named_days = self.default_named_days
 
@@ -86,8 +121,18 @@ class DateParser:
             return result.date
         return None
 
-    def iter_dates(self, text: str, from_right: bool = False, allow_past: bool = False):
+    def get_all(
+        self, text: str, from_right: bool = False, allow_past: bool = False
+    ) -> list[DateResult] | None:
         text = self.sub_named_days(text)
-        return iter_parse(
+        return parse_all(
+            self.base_date, text, from_right=from_right, allow_past=allow_past
+        )
+
+    def get_all_dates(
+        self, text: str, from_right: bool = False, allow_past: bool = False
+    ) -> list[datetime.date] | None:
+        text = self.sub_named_days(text)
+        return parse_all_dates(
             self.base_date, text, from_right=from_right, allow_past=allow_past
         )

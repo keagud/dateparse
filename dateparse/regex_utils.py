@@ -68,8 +68,8 @@ WHITESPACE_BUF = r"(?:\s*)"
 # make regex pattern strings
 MONTHS_MATCH_REGEX = iter_to_regex(MONTH_SHORTNAMES)
 
-#special corner case: since month and monday are confusable 
-WEEKDAY_MATCH_REGEX = "mon(day|\b)" +  iter_to_regex(WEEKDAY_SHORTNAMES[1:])
+# special corner case: since month and monday are confusable
+WEEKDAY_MATCH_REGEX = "mon(day|\b)" + iter_to_regex(WEEKDAY_SHORTNAMES[1:])
 
 
 TIME_INTERVAL_REGEX = iter_to_regex(TIME_INTERVAL_TYPES)

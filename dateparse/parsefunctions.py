@@ -1,7 +1,9 @@
-from typing import Callable, NamedTuple
+from typing import Callable
 from typing import Any
-from re import Pattern, Match
-from datetime import date, timedelta
+
+from datetime import date
+from datetime import timedelta
+
 from calendar import monthrange
 from calendar import isleap
 from itertools import repeat
@@ -9,6 +11,7 @@ import typing
 import datetime
 
 import re
+from re import Pattern
 
 from .regex_utils import TIME_INTERVAL_TYPES
 from .regex_utils import NEGATIVE_INTERVAL_WORDS
@@ -148,7 +151,7 @@ def quick_day_parse(date_tuple: DateTuple, base_date: date) -> date:
 
 
 def months_iter(d: date, backward: bool = False):
-    class MonthInfo(NamedTuple):
+    class MonthInfo(typing.NamedTuple):
         days: int
         month_num: int
         year: int
@@ -160,9 +163,9 @@ def months_iter(d: date, backward: bool = False):
     month_range_end = 13 if not backward else 0
     step = 1 if not backward else -1
 
-    def pack_month_info(y: int, m: int):
-        _, month_days = monthrange(y, m)
-        return MonthInfo(month_days, m, y)
+    def pack_month_info(year_value: int, month_value: int):
+        _, month_days = monthrange(year_value, month_value)
+        return MonthInfo(month_days, month_value, year_value)
 
     for m, y in zip(range(start_month, month_range_end, step), repeat(start_year)):
         yield pack_month_info(y, m)
@@ -189,7 +192,7 @@ def month_delta(input_date: date, months_count: int, backward: bool = False):
     for _ in range(months_count):
         total_days += next(delta_iter).days
 
-    if  backward:
+    if backward:
         total_days *= -1
 
     return timedelta(days=total_days)

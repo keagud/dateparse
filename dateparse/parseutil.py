@@ -1,17 +1,14 @@
+"""Defines public parsing functions"""
 import math
-
 from typing import Iterable
 from typing import Callable
 import datetime
 import re
 import functools as fn
 import itertools as it
+
 from .parsefunctions import absolute_functions_index
 from .parsefunctions import relative_functions_index
-
-from .parsefunctions import absolute_patterns
-from .parsefunctions import relative_patterns
-
 from .parsefunctions import DateTuple
 from .parsefunctions import DateResult
 from .parsefunctions import ExpressionGrouping
@@ -112,8 +109,8 @@ def _partial_preprocess_input(
 
 preprocess_input: Callable[[str], list[ExpressionGrouping]] = fn.partial(
     _partial_preprocess_input,
-    absolute_patterns=absolute_patterns,
-    relative_patterns=relative_patterns,
+    absolute_patterns=absolute_functions_index.keys(),
+    relative_patterns=relative_functions_index.keys(),
 )
 
 
