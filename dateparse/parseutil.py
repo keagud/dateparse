@@ -1,11 +1,12 @@
 """Defines public parsing functions"""
 import math
-from typing import Iterable
-from typing import Callable
 import datetime
 import re
 import functools as fn
 import itertools as it
+
+from typing import Iterable
+from typing import Callable
 
 from .parsefunctions import absolute_functions_index
 from .parsefunctions import relative_functions_index
@@ -17,7 +18,12 @@ from .parsefunctions import ExpressionGrouping
 def sub_named_days(named_days: dict[str, str], text: str):
 
     """
-    Substitutes all substrings in the input for their corresponding value in named_days.
+    Parameters:
+        named_days: dict[str,str]
+        text: str
+
+    Substitutes all substrings in text that match
+    a key in named_days for their corresponding value.
     Returns the processed string.
     """
     text = text.lower()
@@ -147,7 +153,7 @@ parse_expression_group: Callable[
 )
 
 
-def get_expression_span(expr: ExpressionGrouping):
+def _get_expression_span(expr: ExpressionGrouping):
 
     if not expr.deltas:
         return (expr.anchor.start, expr.anchor.end)
@@ -157,7 +163,7 @@ def get_expression_span(expr: ExpressionGrouping):
     return (expr_start, expr.anchor.end)
 
 
-def reduce_expression(
+def _reduce_expression(
     base_date: datetime.date, expr: ExpressionGrouping, allow_past: bool = False
 ):
 
@@ -170,9 +176,8 @@ def reduce_expression(
         bumped_year = resulting_date.year + 1
         resulting_date = resulting_date.replace(year=bumped_year)
 
-    start, end = get_expression_span(expr)
+    start, end = _get_expression_span(expr)
 
-    # TODO this prints with weird whitespace
     delta_content = " ".join([d.content.strip() for d in deltas])
 
     expr_content = f"{delta_content} {anchor.content.strip()}".strip()
@@ -188,6 +193,33 @@ def basic_parse(
     from_right: bool = False,
     allow_past: bool = False,
 ):
+
+    """
+    Get a single date expression from a string, and return it as a DateResult tuple
+
+    Parameters:
+
+        base_date: datetime.date
+            The reference point date for interpreting a date expression with implicit reference
+            to the present time.
+            For example: "Next Thursday" is ambiguous without context.
+            With a base_date of 2022-11-25, it can be unambiguously resolved to 2022-12-01.
+
+        text: str
+             The input text to be processed. It is scanned left to right by default, and the first
+             substring to match a known date expression pattern is parsed and returned as a date.
+
+        from_right: bool
+            If true, begin scanning the text right to left (default: false)
+
+        allow_past: bool
+            If true, correct dates that precede the base date to their next occurrence after
+            (default: false)
+
+    Returns a DateResult tuple, a typed NamedTuple with fields for the date value, start and
+    end indices, and matched substring. If no valid expression  was found, returns None
+
+    """
     expressions = preprocess_input(text)
 
     if not expressions:
@@ -195,7 +227,7 @@ def basic_parse(
 
     target_expr = expressions[-1] if from_right else expressions[0]
 
-    return reduce_expression(base_date, target_expr, allow_past=allow_past)
+    return _reduce_expression(base_date, target_expr, allow_past=allow_past)
 
 
 def parse_all(
@@ -204,6 +236,12 @@ def parse_all(
     from_right: bool = False,
     allow_past: bool = False,
 ):
+
+    """
+    Takes the same parameters as basic_parse, but instead returns _all_ matched expressions,
+    as a list of DateResult tuples.
+    """
+
     expressions = preprocess_input(text)
 
     if not expressions:
@@ -213,7 +251,7 @@ def parse_all(
         expressions.reverse()
 
     date_tuple_results = [
-        reduce_expression(base_date, expr, allow_past=allow_past)
+        _reduce_expression(base_date, expr, allow_past=allow_past)
         for expr in expressions
     ]
 
@@ -226,6 +264,10 @@ def parse_all_dates(
     from_right: bool = False,
     allow_past: bool = False,
 ):
+
+    """
+    Varient of parse_all that returns a list of datetime.date objects instead of DateResults
+    """
 
     parsed_tuples = parse_all(
         base_date, text, from_right=from_right, allow_past=allow_past
