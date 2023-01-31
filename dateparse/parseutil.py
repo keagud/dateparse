@@ -18,6 +18,20 @@ from .parsefunctions import DateResult
 from .parsefunctions import ExpressionGrouping
 
 
+def sub_named_days(named_days: dict[str, str], text: str):
+
+    """
+    Substitutes all substrings in the input for their corresponding value in named_days.
+    Returns the processed string.
+    """
+    text = text.lower()
+
+    for day_name, repl_str in named_days.items():
+        if day_name in text:
+            text = text.replace(day_name, repl_str)
+    return text
+
+
 def _extract_regex_matches(
     text: str, pattern_set: Iterable[re.Pattern]
 ) -> list[re.Match]:
@@ -173,3 +187,16 @@ def basic_parse(base_date: datetime.date, text: str, from_right: bool = False):
     target_expr = expressions[-1] if from_right else expressions[0]
 
     return reduce_expression(base_date, target_expr)
+
+
+def iter_parse(base_date: datetime.date, text: str, from_right: bool = False):
+    expressions = preprocess_input(text)
+
+    if not expressions:
+        return None
+
+    if from_right:
+        expressions.reverse()
+
+    for expr in expressions:
+        yield reduce_expression(base_date, expr)

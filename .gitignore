@@ -8,5 +8,5 @@ poetry.lock
 _local/
 _localtest.py
 dist/
-TODOS
+TODO
 

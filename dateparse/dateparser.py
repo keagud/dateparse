@@ -1,20 +1,5 @@
-from re import Pattern
-from re import Match
-from re import finditer
-
-from typing import Iterator
-from typing import Callable
-from typing import NamedTuple
-
-from datetime import date
-from datetime import timedelta
-from functools import reduce
-
-
-from itertools import chain
-
-from .parsefunctions import absolute_patterns
-from .parsefunctions import DateTuple
+import datetime
+from .parseutil import basic_parse
 
 
 class DateParser:
@@ -36,3 +21,9 @@ class DateParser:
             if day_name in text:
                 text = text.replace(day_name, repl_str)
         return text
+
+    def get_first(self, base_date: datetime.date, text: str):
+        pass
+
+    def get_first_date(self, base_date: datetime.date, text: str):
+        pass
