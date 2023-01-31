@@ -176,9 +176,9 @@ def reduce_expression(
     start, end = get_expression_span(expr)
 
     # TODO this prints with weird whitespace
-    delta_content = "".join([d.content for d in deltas])
+    delta_content = " ".join([d.content.strip() for d in deltas])
 
-    expr_content = f"{delta_content}{anchor.content}".strip()
+    expr_content = f"{delta_content} {anchor.content.strip()}".strip()
 
     new_date_result = DateResult(resulting_date, start, end, expr_content)
 

@@ -32,10 +32,19 @@ def test_parser(make_parser_group):
     for input_text, test_date_vals in vals.items():
         test_date = datetime.date(*test_date_vals)
 
-        assert parser.get_last_date(input_text) == test_date
+        first_date_tuple = parser.get_first(input_text)
+        last_date_tuple = parser.get_last(input_text)
+
+        print("*" * 20)
+        print(f"\tFirst: {first_date_tuple.content} {first_date_tuple.date}\n\tLast: {last_date_tuple.content} {last_date_tuple.date}\n\tExpected: {input_text} | {test_date}")
+
+        assert first_date_tuple.date == test_date
+        assert last_date_tuple.date == test_date
+
+        assert first_date_tuple.date == last_date_tuple.date
 
 
-#@pytest.mark.skip(reason="learn to walk before you can run")
+
 def test_multiple_expressions(make_parser_group):
     parser, vals = make_parser_group
 
@@ -51,8 +60,6 @@ def test_multiple_expressions(make_parser_group):
     iter_parser = parser.iter_dates(input_text)
 
     for inp, outp in zip(expected_dates, iter_parser):
-
-        print(f"input: {inp} | output: {outp}")
         assert inp == outp.date
 
 
