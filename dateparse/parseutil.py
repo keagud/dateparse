@@ -215,5 +215,9 @@ def iter_parse(
     if from_right:
         expressions.reverse()
 
-    for expr in expressions:
-        yield reduce_expression(base_date, expr, allow_past=allow_past)
+    date_tuple_results = [
+        reduce_expression(base_date, expr, allow_past=allow_past)
+        for expr in expressions
+    ]
+
+    return date_tuple_results

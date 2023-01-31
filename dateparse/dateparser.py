@@ -1,5 +1,26 @@
-import datetime
+"""
 
+    Defines a class for parsing multiple dates while maintaining 
+    a persistant base date and user-defined named days.
+
+    DateParser: Main interface class for stateful parsing
+
+        __init__(base_date = None, named_days = None) -> None:
+
+
+        sub_named_days(text: str)
+
+        get_first(text: str)
+
+        get_last(text: str)
+
+
+        get_first_date(text: str)
+        get_last_date(text: str)
+
+
+"""
+import datetime
 from .parsefunctions import DateResult
 from .parseutil import basic_parse
 from .parseutil import iter_parse
