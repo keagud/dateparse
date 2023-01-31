@@ -1,7 +1,6 @@
 import pytest, yaml, datetime
 
 from dateparse import DateParser
-from collections import namedtuple
 
 
 with open("tests/params.yaml", "r") as infile:
@@ -21,7 +20,7 @@ def make_parser_group(request):
     init_day: int = test_data_set["day"]
 
     init_date = datetime.date(init_year, init_month, init_day)
-    test_parser = DateParser(current_date=init_date)
+    test_parser = DateParser(base_date=init_date)
 
     test_io_vals: dict = test_data_set["expected_base"]
     return test_parser, test_io_vals
@@ -33,8 +32,8 @@ def test_parser(make_parser_group):
     for input_text, test_date_vals in vals.items():
         test_date = datetime.date(*test_date_vals)
 
-        assert parser.get_last(input_text) == test_date
-        assert parser.get_last(input_text) == parser.get_first(input_text)
+        assert parser.get_last_date(input_text) == test_date
+        assert parser.get_last_date(input_text) == parser.get_first(input_text)
 
 
 @pytest.mark.skip(reason="learn to walk before you can run")
