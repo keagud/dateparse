@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "dateparse"
-version = "0.11.0"
+version = "0.12.0"
 description = "A pure Python library for parsing natural language time expressions, with minimal dependencies"
 authors = ["keagud <keagud@protonmail.com>"]
-license = "GPL-3.0-or-later"
+license = "CC0-1.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
