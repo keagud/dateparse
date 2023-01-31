@@ -201,7 +201,7 @@ def basic_parse(
     return reduce_expression(base_date, target_expr, allow_past=allow_past)
 
 
-def iter_parse(
+def parse_all(
     base_date: datetime.date,
     text: str,
     from_right: bool = False,
@@ -221,3 +221,20 @@ def iter_parse(
     ]
 
     return date_tuple_results
+
+
+def parse_all_dates(
+    base_date: datetime.date,
+    text: str,
+    from_right: bool = False,
+    allow_past: bool = False,
+):
+
+    parsed_tuples = parse_all(
+        base_date, text, from_right=from_right, allow_past=allow_past
+    )
+
+    if parsed_tuples is None:
+        return None
+
+    return [tup.date for tup in parsed_tuples]
