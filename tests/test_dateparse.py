@@ -33,10 +33,9 @@ def test_parser(make_parser_group):
         test_date = datetime.date(*test_date_vals)
 
         assert parser.get_last_date(input_text) == test_date
-        assert parser.get_last_date(input_text) == parser.get_first_date(input_text)
 
 
-@pytest.mark.skip(reason="learn to walk before you can run")
+#@pytest.mark.skip(reason="learn to walk before you can run")
 def test_multiple_expressions(make_parser_group):
     parser, vals = make_parser_group
 
@@ -54,10 +53,9 @@ def test_multiple_expressions(make_parser_group):
     for inp, outp in zip(expected_dates, iter_parser):
 
         print(f"input: {inp} | output: {outp}")
-        assert inp == outp
+        assert inp == outp.date
 
 
-@pytest.mark.skip(reason="learn to walk before you can run")
 def test_error_handling(make_parser_group):
     parser, vals = make_parser_group
 

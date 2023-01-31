@@ -189,7 +189,7 @@ def month_delta(input_date: date, months_count: int, backward: bool = False):
     for _ in range(months_count):
         total_days += next(delta_iter).days
 
-    if not backward:
+    if  backward:
         total_days *= -1
 
     return timedelta(days=total_days)
@@ -202,9 +202,6 @@ def year_delta(input_date: date, years_count: int, backward: bool = False) -> ti
     Accounts for leap years.
     """
 
-    import ipdb
-
-    ipdb.set_trace()
     start_year = input_date.year
     start_month = input_date.month
     start_day = input_date.day
