@@ -10,7 +10,9 @@ class DateParser:
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
 
     def __init__(
-        self, base_date: datetime.date, named_days: dict[str, str] | None = None
+        self,
+        base_date: datetime.date | None = None,
+        named_days: dict[str, str] | None = None,
     ):
 
         self.named_days = self.default_named_days
@@ -18,6 +20,8 @@ class DateParser:
         if named_days is not None:
             self.named_days.update(named_days)
 
+        if base_date is None:
+            base_date = datetime.date.today()
         self.base_date = base_date
 
     def sub_named_days(self, text: str):
