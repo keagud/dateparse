@@ -37,30 +37,30 @@ class DateParser:
                 text = text.replace(day_name, repl_str)
         return text
 
-    def get_first(self, text: str) -> DateResult | None:
+    def get_first(self, text: str, allow_past: bool = False) -> DateResult | None:
         text = self.sub_named_days(text)
-        return basic_parse(self.base_date, text)
+        return basic_parse(self.base_date, text, allow_past=allow_past)
 
-    def get_first_date(self, text: str) -> datetime.date | None:
+    def get_first_date(self, text: str, allow_past: bool = False) -> datetime.date | None:
         text = self.sub_named_days(text)
-        result = basic_parse(self.base_date, text)
+        result = basic_parse(self.base_date, text, allow_past=allow_past)
 
         if result is not None:
             return result.date
         return None
 
-    def get_last(self, text: str):
+    def get_last(self, text: str, allow_past: bool = False):
         text = self.sub_named_days(text)
-        return basic_parse(self.base_date, text, from_right=True)
+        return basic_parse(self.base_date, text, from_right=True, allow_past=allow_past)
 
-    def get_last_date(self, text: str):
+    def get_last_date(self, text: str, allow_past: bool = False):
         text = self.sub_named_days(text)
-        result = basic_parse(self.base_date, text, from_right=True)
+        result = basic_parse(self.base_date, text, from_right=True, allow_past=allow_past)
 
         if result is not None:
             return result.date
         return None
 
-    def iter_dates(self, text: str, from_right: bool = False):
+    def iter_dates(self, text: str, from_right: bool = False, allow_past: bool = False):
         text = self.sub_named_days(text)
-        return iter_parse(self.base_date, text, from_right=from_right)
+        return iter_parse(self.base_date, text, from_right=from_right, allow_past=allow_past)
