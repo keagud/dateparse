@@ -89,5 +89,4 @@ class DateParserSession(DateParser):
         pass
 
     def get_dates_list():
-            pass
-
+        pass

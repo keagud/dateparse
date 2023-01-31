@@ -35,11 +35,13 @@ class DateTuple(typing.NamedTuple):
 
     date: datetime.date | datetime.timedelta | None = None
 
+
 class DateResult(typing.NamedTuple):
     date: datetime.date
-    start:int
+    start: int
     end: int
     content: str
+
 
 class ExpressionGrouping(typing.NamedTuple):
     anchor: DateTuple
@@ -80,7 +82,7 @@ def normalize_number(number_term: str | None) -> int:
 def mdy_parse(date_tuple: DateTuple, base_date: date) -> date:
     """Parse function for expressions like "October 10." """
 
-    date_fields:dict [str, Any] = date_tuple.fields
+    date_fields: dict[str, Any] = date_tuple.fields
 
     month_str: str = date_fields["month"]
     day_str: str = date_fields["day"]
@@ -92,9 +94,9 @@ def mdy_parse(date_tuple: DateTuple, base_date: date) -> date:
 
     day = int(day_str)
 
-    year= base_date.year
-    if "year" in date_fields and date_fields['year'] is not None:
-        year = int(date_fields["year"]) 
+    year = base_date.year
+    if "year" in date_fields and date_fields["year"] is not None:
+        year = int(date_fields["year"])
 
     return date(year, month, day)
 

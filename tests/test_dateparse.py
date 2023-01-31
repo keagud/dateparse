@@ -10,7 +10,6 @@ with open("tests/params.yaml", "r") as infile:
 
 def make_date(date_params):
     return datetime.date(*date_params)
-  
 
 
 @pytest.fixture(params=test_data)
@@ -37,6 +36,7 @@ def test_parser(make_parser_group):
         assert parser.get_last(input_text) == test_date
         assert parser.get_last(input_text) == parser.get_first(input_text)
 
+
 @pytest.mark.skip(reason="learn to walk before you can run")
 def test_multiple_expressions(make_parser_group):
     parser, vals = make_parser_group
@@ -50,30 +50,21 @@ def test_multiple_expressions(make_parser_group):
 
     input_text = " ".join(inputs)
 
-
-    
     iter_parser = parser.iter_dates(input_text)
 
     for inp, outp in zip(expected_dates, iter_parser):
 
-
         print(f"input: {inp} | output: {outp}")
         assert inp == outp
-        
-
-
-
-    
 
 
 @pytest.mark.skip(reason="learn to walk before you can run")
 def test_error_handling(make_parser_group):
     parser, vals = make_parser_group
 
-    bad_inputs = ["foo", "bar", "維基百科", "O! the pelican!", "شكشوكة" ]
+    bad_inputs = ["foo", "bar", "維基百科", "O! the pelican!", "شكشوكة"]
 
     for text in bad_inputs:
 
         assert parser.get_last(text) == None
         assert parser.get_first(text) == None
-

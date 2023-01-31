@@ -16,6 +16,7 @@ from itertools import chain
 from .parsefunctions import absolute_patterns
 from .parsefunctions import DateTuple
 
+
 class DateParser:
 
     default_named_days = {"christmas": "december 25", "halloween": "october 31"}
@@ -35,5 +36,3 @@ class DateParser:
             if day_name in text:
                 text = text.replace(day_name, repl_str)
         return text
-
-
