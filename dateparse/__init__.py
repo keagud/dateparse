@@ -4,7 +4,8 @@ No dependencies outside the standard library!
 
 Classes:
     DateParser:
-        Defines a class for parsing multiple dates while maintaining persistent user-defined configuration.
+        Defines a class for parsing multiple dates,
+        while maintaining persistent user-defined configuration.
 
 Functions:
     basic_parse
@@ -22,5 +23,3 @@ Functions:
 """
 from .dateparser import DateParser
 from .parseutil import basic_parse, parse_all, parse_all_dates
-
-

@@ -247,7 +247,9 @@ def basic_date_parse(
 ):
 
     """Same as basic_parse, but returns the date directly."""
-    parsed_tuple = basic_parse(base_date, text, from_right=from_right, allow_past=allow_past)
+    parsed_tuple = basic_parse(
+        base_date, text, from_right=from_right, allow_past=allow_past
+    )
 
     if parsed_tuple is None:
         return None

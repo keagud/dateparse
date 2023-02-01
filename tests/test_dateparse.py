@@ -36,13 +36,14 @@ def test_parser(make_parser_group):
         last_date_tuple = parser.get_last(input_text)
 
         print("*" * 20)
-        print(f"\tFirst: {first_date_tuple.content} {first_date_tuple.date}\n\tLast: {last_date_tuple.content} {last_date_tuple.date}\n\tExpected: {input_text} | {test_date}")
+        print(
+            f"\tFirst: {first_date_tuple.content} {first_date_tuple.date}\n\tLast: {last_date_tuple.content} {last_date_tuple.date}\n\tExpected: {input_text} | {test_date}"
+        )
 
         assert first_date_tuple.date == test_date
         assert last_date_tuple.date == test_date
 
         assert first_date_tuple.date == last_date_tuple.date
-
 
 
 def test_multiple_expressions(make_parser_group):
