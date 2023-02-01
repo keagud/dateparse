@@ -1,8 +1,7 @@
 """Constant definitions and pre-compilation of regex patterns"""
+import functools
 import re
 from typing import Iterable
-import functools
-
 
 MONTH_SHORTNAMES = [
     "",
@@ -58,7 +57,7 @@ NUMBER_WORDS = [
 # utility function to convert an iterable to a
 # regex pattern string matching any element in the list
 # returned as a string rather than re.Pattern to allow further recombination
-def iter_to_regex(input_list: Iterable) -> str:
+def _iter_to_regex(input_list: Iterable) -> str:
     return "|".join([str(s) for s in input_list if s])
 
 
@@ -66,16 +65,20 @@ QUICK_DAY_NAMES = ["today", "tomorrow", "yesterday"]
 
 WHITESPACE_BUF = r"(?:\s*)"
 # make regex pattern strings
-MONTHS_MATCH_REGEX = iter_to_regex(MONTH_SHORTNAMES)
-WEEKDAY_MATCH_REGEX = iter_to_regex(WEEKDAY_SHORTNAMES)
-TIME_INTERVAL_REGEX = iter_to_regex(TIME_INTERVAL_TYPES)
-NUMBER_WORDS_REGEX = iter_to_regex(NUMBER_WORDS)
-QUICK_DAYS_REGEX = iter_to_regex(QUICK_DAY_NAMES)
+MONTHS_MATCH_REGEX = _iter_to_regex(MONTH_SHORTNAMES)
+
+# special corner case: since month and monday are confusable
+WEEKDAY_MATCH_REGEX = "mon(day|\b)" + _iter_to_regex(WEEKDAY_SHORTNAMES[1:])
+
+
+TIME_INTERVAL_REGEX = _iter_to_regex(TIME_INTERVAL_TYPES)
+NUMBER_WORDS_REGEX = _iter_to_regex(NUMBER_WORDS)
+QUICK_DAYS_REGEX = _iter_to_regex(QUICK_DAY_NAMES)
 
 INTERVAL_PREPOSITION_REGEX = (
-    iter_to_regex(POSITIVE_INTERVAL_WORDS)
+    _iter_to_regex(POSITIVE_INTERVAL_WORDS)
     + "|"
-    + iter_to_regex(NEGATIVE_INTERVAL_WORDS)
+    + _iter_to_regex(NEGATIVE_INTERVAL_WORDS)
 )
 
 
