@@ -63,6 +63,13 @@ def test_multiple_expressions(make_parser_group):
     for inp, outp in zip(expected_dates, iter_parser):
         assert inp == outp.date
 
+        start, end = outp.start, outp.end
+
+        substring = input_text[start:end]
+        print(substring)
+
+        assert parser.get_first_date(substring) == inp
+
 
 def test_error_handling(make_parser_group):
     parser, vals = make_parser_group
