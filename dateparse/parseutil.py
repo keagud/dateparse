@@ -239,6 +239,22 @@ def basic_parse(
     return _reduce_expression(base_date, target_expr, allow_past=allow_past)
 
 
+def basic_date_parse(
+    base_date: datetime.date,
+    text: str,
+    from_right: bool = False,
+    allow_past: bool = False,
+):
+
+    """Same as basic_parse, but returns the date directly."""
+    parsed_tuple = basic_parse(base_date, text, from_right=from_right, allow_past=allow_past)
+
+    if parsed_tuple is None:
+        return None
+
+    return parsed_tuple.date
+
+
 def parse_all(
     base_date: datetime.date,
     text: str,
