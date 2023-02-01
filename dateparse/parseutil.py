@@ -1,18 +1,18 @@
-"""Defines public parsing functions"""
-import math
+"""Defines public date parsing functions."""
 import datetime
-import re
 import functools as fn
 import itertools as it
+import math
+import re
+from typing import Callable, Iterable
 
-from typing import Iterable
-from typing import Callable
-
-from .parsefunctions import absolute_functions_index
-from .parsefunctions import relative_functions_index
-from .parsefunctions import DateTuple
-from .parsefunctions import DateResult
-from .parsefunctions import ExpressionGrouping
+from .parsefunctions import (
+    DateResult,
+    DateTuple,
+    ExpressionGrouping,
+    absolute_functions_index,
+    relative_functions_index,
+)
 
 
 def sub_named_days(named_days: dict[str, str], text: str):

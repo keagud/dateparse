@@ -1,8 +1,7 @@
 """Constant definitions and pre-compilation of regex patterns"""
+import functools
 import re
 from typing import Iterable
-import functools
-
 
 MONTH_SHORTNAMES = [
     "",
