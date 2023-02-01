@@ -60,9 +60,11 @@ def _remove_subgroups(dates: list[DateTuple]) -> list[DateTuple]:
     # remove any matches fully contained within another match
     iter_by_three = zip(dates[:-1], dates[1:-1], dates[2:])
     for first, second, third in iter_by_three:
-        if (second.start >= first.start and second.end <= first.end) or (
-            second.start >= third.start and second.end <= third.end
-        ):
+
+        within_prior = second.start >= first.start and second.end <= first.end
+        within_next = second.start >= third.start and second.end <= third.end
+
+        if within_prior or within_next:
             dates.remove(second)
 
     return dates
@@ -190,7 +192,7 @@ def _reduce_expression(
     delta_content = " ".join([delta_tup.content.strip() for delta_tup in deltas])
     anchor_content = anchor.content.strip()
 
-    expr_content = delta_content + anchor_content
+    expr_content = delta_content + " " + anchor_content
 
     new_date_result = DateResult(resulting_date, start, end, expr_content)
 

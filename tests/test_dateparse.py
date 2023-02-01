@@ -35,15 +35,13 @@ def test_parser(make_parser_group):
         first_date_tuple = parser.get_first(input_text)
         last_date_tuple = parser.get_last(input_text)
 
-        print("*" * 20)
-        print(
-            f"\tFirst: {first_date_tuple.content} {first_date_tuple.date}\n\tLast: {last_date_tuple.content} {last_date_tuple.date}\n\tExpected: {input_text} | {test_date}"
-        )
+        first_date = parser.get_first_date(input_text)
+        last_date = parser.get_last_date(input_text)
 
         assert first_date_tuple.date == test_date
         assert last_date_tuple.date == test_date
-
-        assert first_date_tuple.date == last_date_tuple.date
+        assert first_date == test_date
+        assert last_date == test_date
 
 
 def test_multiple_expressions(make_parser_group):
@@ -63,12 +61,10 @@ def test_multiple_expressions(make_parser_group):
     for inp, outp in zip(expected_dates, iter_parser):
         assert inp == outp.date
 
-        start, end = outp.start, outp.end
+    iter_date_parser = parser.get_all_dates(input_text)
 
-        substring = input_text[start:end]
-        print(substring)
-
-        assert parser.get_first_date(substring) == inp
+    for inp, outp in zip(expected_dates, iter_date_parser):
+        assert inp == outp
 
 
 def test_error_handling(make_parser_group):
@@ -80,3 +76,6 @@ def test_error_handling(make_parser_group):
 
         assert parser.get_last(text) == None
         assert parser.get_first(text) == None
+
+        assert parser.get_last_date(text) == None
+        assert parser.get_first_date(text) == None
