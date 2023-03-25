@@ -146,7 +146,6 @@ def _relative_weekday_parse(
 
 
 def _quick_day_parse(date_tuple: DateTuple, base_date: datetime.date) -> datetime.date:
-
     """Parse function for "today", "tomorrow", "yesterday" """
     date_fields = date_tuple.fields
 

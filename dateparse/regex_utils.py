@@ -54,6 +54,7 @@ NUMBER_WORDS = [
     "ten",
 ]
 
+
 # utility function to convert an iterable to a
 # regex pattern string matching any element in the list
 # returned as a string rather than re.Pattern to allow further recombination

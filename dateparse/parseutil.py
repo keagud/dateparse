@@ -36,7 +36,6 @@ def sub_named_days(named_days: dict[str, str], text: str):
 def _extract_regex_matches(
     text: str, pattern_set: Iterable[re.Pattern]
 ) -> list[re.Match]:
-
     match_chain = it.chain.from_iterable(
         (re.finditer(pattern, text) for pattern in pattern_set)
     )
@@ -45,7 +44,6 @@ def _extract_regex_matches(
 
 
 def _match_to_tuple(match: re.Match) -> DateTuple:
-
     return DateTuple(
         pattern=match.re,
         content=match.group(),
@@ -56,11 +54,9 @@ def _match_to_tuple(match: re.Match) -> DateTuple:
 
 
 def _remove_subgroups(dates: list[DateTuple]) -> list[DateTuple]:
-
     # remove any matches fully contained within another match
     iter_by_three = zip(dates[:-1], dates[1:-1], dates[2:])
     for first, second, third in iter_by_three:
-
         within_prior = second.start >= first.start and second.end <= first.end
         within_next = second.start >= third.start and second.end <= third.end
 
@@ -78,7 +74,6 @@ def _ordered_matches(dates: list[DateTuple]) -> list[DateTuple]:
 def _make_expression_groups(
     match_tuples: list[DateTuple], absolute_patterns: set[re.Pattern]
 ) -> list[ExpressionGrouping]:
-
     all_groups: list[ExpressionGrouping] = []
     group_deltas: list[DateTuple] = []
 
@@ -108,7 +103,6 @@ def _partial_preprocess_input(
     absolute_patterns: Iterable[re.Pattern] | None = None,
     relative_patterns: Iterable[re.Pattern] | None = None,
 ) -> list[ExpressionGrouping]:
-
     if absolute_patterns is None or relative_patterns is None:
         raise ValueError
 
@@ -136,7 +130,6 @@ def _partial_parse_expression_group(
     abs_index=None,
     rel_index=None,
 ) -> datetime.date:
-
     if abs_index is None or rel_index is None:
         raise ValueError
 
@@ -165,7 +158,6 @@ parse_expression_group: Callable[
 
 
 def _get_expression_span(expr: ExpressionGrouping):
-
     if not expr.deltas:
         return (expr.anchor.start, expr.anchor.end)
 
@@ -177,7 +169,6 @@ def _get_expression_span(expr: ExpressionGrouping):
 def _reduce_expression(
     base_date: datetime.date, expr: ExpressionGrouping, allow_past: bool = False
 ):
-
     deltas = expr.deltas
     anchor = expr.anchor
 
@@ -247,7 +238,6 @@ def basic_date_parse(
     from_right: bool = False,
     allow_past: bool = False,
 ):
-
     """Same as basic_parse, but returns the date directly."""
     parsed_tuple = basic_parse(
         base_date, text, from_right=from_right, allow_past=allow_past

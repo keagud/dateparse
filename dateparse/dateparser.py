@@ -72,7 +72,6 @@ class DateParser:
         base_date: datetime.date | None = None,
         named_days: dict[str, str] | None = None,
     ):
-
         """
         Constructor for DateParser
 
@@ -88,7 +87,6 @@ class DateParser:
         self.base_date = base_date
 
     def sub_named_days(self, text: str):
-
         """
         Substitutes all substrings in the input for their corresponding value in self.named_days.
         Returns the processed string.
