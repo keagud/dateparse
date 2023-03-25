@@ -65,7 +65,29 @@ class DateParser:
 
     """
 
-    default_named_days = {"christmas": "december 25", "halloween": "october 31"}
+    default_named_days = {
+        "New Year's Day": "January 1",
+        "New Year's": "January 1",
+        "Martin Luther King Jr. Day": "January 17",
+        "Groundhog Day": "February 2",
+        "Valentine's Day": "February 14",
+        "Presidents' Day": "February 21",
+        "Leap Day" : "February 29",
+        "Pi Day": "March 14",
+        "St. Patrick's Day": "March 17",
+        "April Fool's Day": "April 1",
+        "Earth Day": "April 22",
+        "May Day": "May 1",
+        "Cinco de Mayo": "May 5",
+        "Independence Day": "July 4",
+        "Halloween": "October 31",
+        "Veterans Day": "November 11",
+        "Christmas Eve": "December 24",
+        "Christmas Day": "December 25",
+        "Christmas": "December 25",
+        "Boxing Day": "December 26",
+        "New Year's Eve": "December 31",
+    }
 
     def __init__(
         self,
