@@ -132,7 +132,7 @@ def _relative_weekday_parse(
     specifier = date_fields.get("specifier", "")
     weekday_str = date_fields["weekday_name"]
 
-    weekday_num: int = WEEKDAY_SHORTNAMES.index(weekday_str)
+    weekday_num: int = WEEKDAY_SHORTNAMES.index(weekday_str[:3])
 
     days_delta = weekday_num - base_date.isoweekday()
 
