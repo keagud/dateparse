@@ -21,5 +21,6 @@ Functions:
         Get all dates from a string as a list of datetime.date objects
 
 """
+
 from .dateparser import DateParser
-from .parseutil import basic_parse, parse_all, parse_all_dates,basic_date_parse
+from .parseutil import basic_parse, parse_all, parse_all_dates, basic_date_parse

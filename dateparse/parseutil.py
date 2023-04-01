@@ -36,7 +36,6 @@ def sub_named_days(named_days: dict[str, str], text: str):
 def _extract_regex_matches(
     text: str, pattern_set: Iterable[re.Pattern]
 ) -> list[re.Match]:
-
     match_chain = it.chain.from_iterable(
         (re.finditer(pattern, text) for pattern in pattern_set)
     )
@@ -45,7 +44,6 @@ def _extract_regex_matches(
 
 
 def _match_to_tuple(match: re.Match) -> DateTuple:
-
     return DateTuple(
         pattern=match.re,
         content=match.group(),
@@ -56,11 +54,9 @@ def _match_to_tuple(match: re.Match) -> DateTuple:
 
 
 def _remove_subgroups(dates: list[DateTuple]) -> list[DateTuple]:
-
     # remove any matches fully contained within another match
     iter_by_three = zip(dates[:-1], dates[1:-1], dates[2:])
     for first, second, third in iter_by_three:
-
         within_prior = second.start >= first.start and second.end <= first.end
         within_next = second.start >= third.start and second.end <= third.end
 
@@ -78,7 +74,6 @@ def _ordered_matches(dates: list[DateTuple]) -> list[DateTuple]:
 def _make_expression_groups(
     match_tuples: list[DateTuple], absolute_patterns: set[re.Pattern]
 ) -> list[ExpressionGrouping]:
-
     all_groups: list[ExpressionGrouping] = []
     group_deltas: list[DateTuple] = []
 
@@ -108,11 +103,11 @@ def _partial_preprocess_input(
     absolute_patterns: Iterable[re.Pattern] | None = None,
     relative_patterns: Iterable[re.Pattern] | None = None,
 ) -> list[ExpressionGrouping]:
-
     if absolute_patterns is None or relative_patterns is None:
         raise ValueError
 
-    # find all regex matches, convert to DateTuple objects, and sort by occurrence in the string
+    # find all regex matches, convert to DateTuple objects
+    # and sort by occurrence in the string
     pattern_set = list(it.chain(absolute_patterns, relative_patterns))
     regex_matches = _extract_regex_matches(text, pattern_set)
     match_tuples = [_match_to_tuple(match) for match in regex_matches]
@@ -136,7 +131,6 @@ def _partial_parse_expression_group(
     abs_index=None,
     rel_index=None,
 ) -> datetime.date:
-
     if abs_index is None or rel_index is None:
         raise ValueError
 
@@ -165,7 +159,6 @@ parse_expression_group: Callable[
 
 
 def _get_expression_span(expr: ExpressionGrouping):
-
     if not expr.deltas:
         return (expr.anchor.start, expr.anchor.end)
 
@@ -177,7 +170,6 @@ def _get_expression_span(expr: ExpressionGrouping):
 def _reduce_expression(
     base_date: datetime.date, expr: ExpressionGrouping, allow_past: bool = False
 ):
-
     deltas = expr.deltas
     anchor = expr.anchor
 
@@ -211,24 +203,28 @@ def basic_parse(
     Parameters:
 
         base_date: datetime.date
-            The reference point date for interpreting a date expression with implicit reference
-            to the present time.
+            The reference point date for interpreting a date expression,
+            with implicit reference to the present time.
             For example: "Next Thursday" is ambiguous without context.
-            With a base_date of 2022-11-25, it can be unambiguously resolved to 2022-12-01.
+            With a base_date of 2022-11-25, it can be unambiguously
+            resolved to 2022-12-01.
 
         text: str
-             The input text to be processed. It is scanned left to right by default, and the first
-             substring to match a known date expression pattern is parsed and returned as a date.
+             The input text to be processed. It is scanned left to right by default,
+             and the first substring to match a known date expression pattern is parsed
+             and returned as a date.
 
         from_right: bool
             If true, begin scanning the text right to left (default: false)
 
         allow_past: bool
-            If true, correct dates that precede the base date to their next occurrence after
+            If true, correct dates that precede the base date to their next occurrence
+            after base_date
             (default: false)
 
-    Returns a DateResult tuple, a typed NamedTuple with fields for the date value, start and
-    end indices, and matched substring. If no valid expression  was found, returns None
+    Returns a DateResult tuple, a typed NamedTuple with fields
+    for the date value, start and end indices, and matched substring.
+    If no valid expression  was found, returns None
 
     """
     expressions = preprocess_input(text)
@@ -247,7 +243,6 @@ def basic_date_parse(
     from_right: bool = False,
     allow_past: bool = False,
 ):
-
     """Same as basic_parse, but returns the date directly."""
     parsed_tuple = basic_parse(
         base_date, text, from_right=from_right, allow_past=allow_past
@@ -289,7 +284,10 @@ def parse_all_dates(
     from_right: bool = False,
     allow_past: bool = False,
 ):
-    """Variant of parse_all that returns a list of datetime.date objects instead of DateResults."""
+    """
+    Variant of parse_all that returns a list of datetime.date objects
+    instead of DateResults.
+    """
 
     parsed_tuples = parse_all(
         base_date,

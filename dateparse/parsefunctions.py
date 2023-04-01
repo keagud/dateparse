@@ -63,7 +63,10 @@ relative_patterns = [RELATIVE_INTERVAL_PATTERN]
 
 
 def _normalize_number(number_term: str | None) -> int:
-    """Converts a number word as a string to an int, raises ValueError if not a number."""
+    """
+    Converts a number word as a string to an int.
+    Raises ValueError if not a number.
+    """
 
     if number_term is None:
         return 1
@@ -146,7 +149,6 @@ def _relative_weekday_parse(
 
 
 def _quick_day_parse(date_tuple: DateTuple, base_date: datetime.date) -> datetime.date:
-
     """Parse function for "today", "tomorrow", "yesterday" """
     date_fields = date_tuple.fields
 

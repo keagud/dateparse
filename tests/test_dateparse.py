@@ -1,7 +1,9 @@
-import pytest, yaml, datetime
+import datetime
+
+import pytest
+import yaml
 
 from dateparse import DateParser
-
 
 with open("tests/params.yaml", "r") as infile:
     test_data = yaml.full_load(infile)
@@ -73,9 +75,8 @@ def test_error_handling(make_parser_group):
     bad_inputs = ["foo", "bar", "維基百科", "O! the pelican!", "شكشوكة"]
 
     for text in bad_inputs:
+        assert parser.get_last(text) is None
+        assert parser.get_first(text) is None
 
-        assert parser.get_last(text) == None
-        assert parser.get_first(text) == None
-
-        assert parser.get_last_date(text) == None
-        assert parser.get_first_date(text) == None
+        assert parser.get_last_date(text) is None
+        assert parser.get_first_date(text) is None

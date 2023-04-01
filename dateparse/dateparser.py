@@ -26,7 +26,8 @@ class DateParser:
             before parsing a string, all instances of each key will
             be replaced with the corresponding value
 
-            A default pre-defined dictionary of named dates containing all (American) holidays with
+            A default pre-defined dictionary of named dates
+            containing all (American) holidays with
             a fixed date representation is always enabled in addition.
 
        sub_named_days(text: str)
@@ -38,7 +39,8 @@ class DateParser:
 
            Get the first or last occurrence of date expression within the text.
            Both return a DateResult object.
-           A DateResult is a named tuple (typing.NamedTuple) defined in parsefunctions.py
+           A DateResult is a named tuple (typing.NamedTuple),
+           defined in parsefunctions.py
 
 
        get_first_date(text: str) -> datetime.date | None
@@ -61,7 +63,8 @@ class DateParser:
 
        These both get all dates found in the input text, and return them as a list.
        get_all returns a list of DateResult tuples,
-       and get_all_dates returns a list of bare datetime.date objects; this is the only difference
+       and get_all_dates returns a list of bare datetime.date objects;
+       this is the only difference
 
     """
 
@@ -72,7 +75,6 @@ class DateParser:
         base_date: datetime.date | None = None,
         named_days: dict[str, str] | None = None,
     ):
-
         """
         Constructor for DateParser
 
@@ -88,9 +90,9 @@ class DateParser:
         self.base_date = base_date
 
     def sub_named_days(self, text: str):
-
         """
-        Substitutes all substrings in the input for their corresponding value in self.named_days.
+        Substitutes all substrings in the input for their
+        corresponding value in self.named_days.
         Returns the processed string.
         """
         text = text.lower()
