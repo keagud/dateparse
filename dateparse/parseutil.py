@@ -34,13 +34,27 @@ def sub_named_days(named_days: dict[str, str], text: str):
 
 
 def _extract_regex_matches(
-    text: str, pattern_set: Iterable[re.Pattern]
+    text: str, pattern_set: Iterable[re.Pattern], escape: str = "\\"
 ) -> list[re.Match]:
     match_chain = it.chain.from_iterable(
         (re.finditer(pattern, text) for pattern in pattern_set)
     )
 
-    return list(match_chain)
+    match_list = []
+
+    escape_len = len(escape)
+    for match in match_chain:
+        if match.start() != 0:
+            prior = text[match.start() - escape_len : match.start()]
+        else:
+            prior = match.group()[:escape_len]
+
+        if prior == escape:
+            continue
+
+        match_list.append(match)
+
+    return match_list
 
 
 def _match_to_tuple(match: re.Match) -> DateTuple:
@@ -85,16 +99,11 @@ def _make_expression_groups(
             continue
 
         if not group_deltas:
-            is_adjacent = False
+            pass
         else:
-            is_adjacent = (tup.start - group_deltas[-1].end) <= 1
-
-        if is_adjacent:
-            group_deltas = []
-            continue
+            abs(tup.start - group_deltas[-1].end) <= 1
 
         group_deltas.append(tup)
-
     return all_groups
 
 
@@ -109,10 +118,11 @@ def _partial_preprocess_input(
 
     # find all regex matches, convert to DateTuple objects
     # and sort by occurrence in the string
+
     pattern_set = list(it.chain(absolute_patterns, relative_patterns))
     regex_matches = _extract_regex_matches(text, pattern_set)
 
-    regex_matches = [m for m in regex_matches if text[max(m.start() - 1, 0)] != escape]
+    # regex_matches = [m for m in regex_matches if text[m.start() - 1] != escape]
 
     match_tuples = [_match_to_tuple(match) for match in regex_matches]
     match_tuples = _ordered_matches(match_tuples)

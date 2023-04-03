@@ -18,7 +18,11 @@
       "today" : [2022, 12, 17],
       "tomorrow" : [2022,12,18],
       "the day after tomorrow" : [2022, 12, 19],
-      "a week from yesterday" : [2022, 12, 23]
+      "a week from yesterday" : [2022, 12, 23], 
+      "a week after a week before yesterday" : [2023, 12, 16],
+      "two weeks after a month before February 1": [2023, 1, 15],
+      "three days after a year from today" : [2023, 12, 20]
+      
       
 
     },
