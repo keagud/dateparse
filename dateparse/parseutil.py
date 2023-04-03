@@ -102,6 +102,7 @@ def _partial_preprocess_input(
     text: str,
     absolute_patterns: Iterable[re.Pattern] | None = None,
     relative_patterns: Iterable[re.Pattern] | None = None,
+    escape: str = "\\",
 ) -> list[ExpressionGrouping]:
     if absolute_patterns is None or relative_patterns is None:
         raise ValueError
@@ -110,6 +111,9 @@ def _partial_preprocess_input(
     # and sort by occurrence in the string
     pattern_set = list(it.chain(absolute_patterns, relative_patterns))
     regex_matches = _extract_regex_matches(text, pattern_set)
+
+    regex_matches = [m for m in regex_matches if text[max(m.start() - 1, 0)] != escape]
+
     match_tuples = [_match_to_tuple(match) for match in regex_matches]
     match_tuples = _ordered_matches(match_tuples)
 
@@ -196,6 +200,7 @@ def basic_parse(
     text: str,
     from_right: bool = False,
     allow_past: bool = False,
+    escape: str = "\\",
 ):
     """
     Get a single date expression from a string, and return it as a DateResult tuple.
@@ -222,12 +227,16 @@ def basic_parse(
             after base_date
             (default: false)
 
+        escape: str
+            One or more chars that signify the
+            parser should ignore the following sequence
+
     Returns a DateResult tuple, a typed NamedTuple with fields
     for the date value, start and end indices, and matched substring.
     If no valid expression  was found, returns None
 
     """
-    expressions = preprocess_input(text)
+    expressions = preprocess_input(text, escape=escape)
 
     if not expressions:
         return None
@@ -242,10 +251,11 @@ def basic_date_parse(
     text: str,
     from_right: bool = False,
     allow_past: bool = False,
+    escape: str = "\\",
 ):
     """Same as basic_parse, but returns the date directly."""
     parsed_tuple = basic_parse(
-        base_date, text, from_right=from_right, allow_past=allow_past
+        base_date, text, from_right=from_right, allow_past=allow_past, escape=escape
     )
 
     if parsed_tuple is None:
@@ -259,10 +269,11 @@ def parse_all(
     text: str,
     from_right: bool = False,
     allow_past: bool = False,
+    escape: str = "\\",
 ):
     """Get _all_ matched expressions as a list of DateResult tuples."""
 
-    expressions = preprocess_input(text)
+    expressions = preprocess_input(text, escape=escape)
 
     if not expressions:
         return None
@@ -283,6 +294,7 @@ def parse_all_dates(
     text: str,
     from_right: bool = False,
     allow_past: bool = False,
+    escape: str = "\\",
 ):
     """
     Variant of parse_all that returns a list of datetime.date objects
@@ -290,10 +302,7 @@ def parse_all_dates(
     """
 
     parsed_tuples = parse_all(
-        base_date,
-        text,
-        from_right=from_right,
-        allow_past=allow_past,
+        base_date, text, from_right=from_right, allow_past=allow_past, escape=escape
     )
 
     if parsed_tuples is None:

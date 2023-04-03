@@ -74,6 +74,7 @@ class DateParser:
         self,
         base_date: datetime.date | None = None,
         named_days: dict[str, str] | None = None,
+        escape: str = "\\",
     ):
         """
         Constructor for DateParser
@@ -81,6 +82,7 @@ class DateParser:
         """
 
         self.named_days = self.default_named_days
+        self.escape = escape
 
         if named_days is not None:
             self.named_days.update(named_days)
@@ -105,14 +107,18 @@ class DateParser:
     def get_first(self, text: str, allow_past: bool = False) -> DateResult | None:
         """Returns a DateResult tuple for the leftmost date expression in the input"""
         text = self.sub_named_days(text)
-        return basic_parse(self.base_date, text, allow_past=allow_past)
+        return basic_parse(
+            self.base_date, text, allow_past=allow_past, escape=self.escape
+        )
 
     def get_first_date(
         self, text: str, allow_past: bool = False
     ) -> datetime.date | None:
         """Returns a datetime.date for the leftmost date expression in the input"""
         text = self.sub_named_days(text)
-        result = basic_parse(self.base_date, text, allow_past=allow_past)
+        result = basic_parse(
+            self.base_date, text, allow_past=allow_past, escape=self.escape
+        )
 
         if result is not None:
             return result.date
@@ -121,13 +127,23 @@ class DateParser:
     def get_last(self, text: str, allow_past: bool = False):
         """Returns a DateResult tuple for the rightmost date expression in the input"""
         text = self.sub_named_days(text)
-        return basic_parse(self.base_date, text, from_right=True, allow_past=allow_past)
+        return basic_parse(
+            self.base_date,
+            text,
+            from_right=True,
+            allow_past=allow_past,
+            escape=self.escape,
+        )
 
     def get_last_date(self, text: str, allow_past: bool = False):
         """Returns a datetime.date for the rightmost date expression in the input"""
         text = self.sub_named_days(text)
         result = basic_parse(
-            self.base_date, text, from_right=True, allow_past=allow_past
+            self.base_date,
+            text,
+            from_right=True,
+            allow_past=allow_past,
+            escape=self.escape,
         )
 
         if result is not None:
@@ -140,7 +156,11 @@ class DateParser:
         """Returns a list of all found date expressions as DateResult tuples"""
         text = self.sub_named_days(text)
         return parse_all(
-            self.base_date, text, from_right=from_right, allow_past=allow_past
+            self.base_date,
+            text,
+            from_right=from_right,
+            allow_past=allow_past,
+            escape=self.escape,
         )
 
     def get_all_dates(

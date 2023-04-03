@@ -69,6 +69,15 @@ def test_multiple_expressions(make_parser_group):
         assert inp == outp
 
 
+def test_escaping():
+    parser = DateParser(base_date=datetime.date(2020, 1, 1))
+
+    escaped = ["\\today", "\\tomorrow", "\\wednesday"]  # TODO add more
+
+    for e in escaped:
+        assert parser.get_first(e) is None
+
+
 def test_error_handling(make_parser_group):
     parser, vals = make_parser_group
 
