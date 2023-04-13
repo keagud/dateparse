@@ -205,6 +205,7 @@ def _reduce_expression(
     return new_date_result
 
 
+@fn.cache
 def basic_parse(
     base_date: datetime.date,
     text: str,
@@ -274,6 +275,7 @@ def basic_date_parse(
     return parsed_tuple.date
 
 
+@fn.cache
 def parse_all(
     base_date: datetime.date,
     text: str,
@@ -297,6 +299,7 @@ def parse_all(
     ]
 
     return date_tuple_results
+
 
 
 def parse_all_dates(

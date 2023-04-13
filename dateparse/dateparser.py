@@ -84,6 +84,8 @@ class DateParser:
         self.named_days = self.default_named_days
         self.escape = escape
 
+        self.cache: dict[str, DateResult] = {}
+
         if named_days is not None:
             self.named_days.update(named_days)
 
