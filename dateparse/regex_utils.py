@@ -41,7 +41,7 @@ NEGATIVE_INTERVAL_WORDS: Final = ["before"]
 POSITIVE_INTERVAL_WORDS: Final = ["from", "after"]
 
 NUMBER_WORDS: Final = [
-    "",
+    "zero",
     "one",
     "two",
     "three",
